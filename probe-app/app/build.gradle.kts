@@ -21,6 +21,12 @@ android {
         jniLibs { useLegacyPackaging = true }
     }
 
+    androidResources {
+        // 消费方契约：python 树含 _internal/_vendor/_bundled 等下划线目录，
+        // aapt 默认 ignoreAssetsPattern 的 `<dir>_*` 会丢弃（与容器模块同步覆写）
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

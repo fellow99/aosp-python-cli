@@ -59,7 +59,7 @@ EOF
 PYVER=""; API="24"; SRC=""; DEPS=""; NDK=""; ANDROID_SDK="${ANDROID_HOME:-}"
 HOST_PY=""; OUT=""; JOBS="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 CONFIGURE_MODE="android"; EXTENSION_MODE="static-first"; SKIP_EXT=""
-DRY_RUN=0; COLLECT_ONLY=0; STDLIB_SRC=""
+DRY_RUN=0; COLLECT_ONLY=0; STDLIB_SRC=""; SYSCFG_FROM=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -76,6 +76,7 @@ while [[ $# -gt 0 ]]; do
     --extension-mode) EXTENSION_MODE="$2"; shift 2;;
     --skip-extensions) SKIP_EXT="$2"; shift 2;;
     --stdlib-src) STDLIB_SRC="$2"; shift 2;;
+    --sysconfig) SYSCFG_FROM="$2"; shift 2;;
     --dry-run) DRY_RUN=1; shift;;
     --collect-only) COLLECT_ONLY=1; shift;;
     -h|--help) usage; exit 0;;
@@ -309,29 +310,41 @@ fi
 # ── ⑥ stdlib 收集（FR-001-020）───────────────────────────────────────────────
 STDLIB_FROM="${STDLIB_SRC:-$SRC/Lib}"
 ASSETS="$OUT/stdlib-assets"
-log "⑥ stdlib 收集：$STDLIB_FROM → $ASSETS/Lib（剔除 test/idlelib/tkinter/__pycache__/*.pyc）"
+# POSIX 布局（探针实证 2026-11-02：解释器 getpath 找 <PYTHONHOME>/lib/python3.14，
+# Android 大小写敏感 ⇒ 采集为 lib/python3.14/，非 Windows 源码树的大写 Lib/）
+STDROOT="$ASSETS/lib/python3.14"
+log "⑥ stdlib 收集：$STDLIB_FROM → $STDROOT（剔除 test/idlelib/tkinter/__pycache__/*.pyc）"
 if [[ "$DRY_RUN" == 0 || "$COLLECT_ONLY" == 1 ]]; then
   [[ -d "$STDLIB_FROM" ]] || err "stdlib 源缺失：$STDLIB_FROM"
-  rm -rf "$ASSETS/Lib"; mkdir -p "$ASSETS/Lib"
-  cp -R "$STDLIB_FROM/." "$ASSETS/Lib/"
+  rm -rf "$STDROOT"; mkdir -p "$STDROOT"
+  cp -R "$STDLIB_FROM/." "$STDROOT/"
   PRUNED=0
   for d in test idlelib tkinter tkinter/test; do
-    [[ -d "$ASSETS/Lib/$d" ]] && { rm -rf "$ASSETS/Lib/$d"; PRUNED=$((PRUNED+1)); }
+    [[ -d "$STDROOT/$d" ]] && { rm -rf "$STDROOT/$d"; PRUNED=$((PRUNED+1)); }
   done
-  find "$ASSETS/Lib" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
-  PYC=$(find "$ASSETS/Lib" -name '*.pyc' -type f | wc -l)
-  find "$ASSETS/Lib" -name '*.pyc' -type f -delete 2>/dev/null || true
+  find "$STDROOT" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
+  PYC=$(find "$STDROOT" -name '*.pyc' -type f | wc -l)
+  find "$STDROOT" -name '*.pyc' -type f -delete 2>/dev/null || true
+  # 构建期生成的平台数据模块（sysconfig 依赖；pip/ensurepip 启动链必需——探针实证 2026-11-02）
+  SYSCFG_SRC_DIR="$HOST_BUILD_DIR/build/lib/python3.14"
+  if [[ "$COLLECT_ONLY" == 1 && -n "$SYSCFG_FROM" ]]; then SYSCFG_SRC_DIR="$SYSCFG_FROM"; fi
+  if compgen -G "$SYSCFG_SRC_DIR/_sysconfigdata"* >/dev/null; then
+    cp "$SYSCFG_SRC_DIR"/_sysconfigdata* "$STDROOT/"
+    log "⑥ _sysconfigdata 拷入：$(ls "$SYSCFG_SRC_DIR"/_sysconfigdata*)"
+  else
+    log "⑥ ⚠ 未找到 _sysconfigdata*（$SYSCFG_SRC_DIR）——pip/ensurepip 将不可用（构建模式必出；collect-only 可用 --sysconfig 注入）"
+  fi
   log "⑥ 剔除目录数=$PRUNED pyc=$PYC（计数登记）"
 fi
 
 # ── ⑦ pip 树 + 壳脚本 + ensurepip/CA（FR-001-021/022/023）───────────────────
 PIP_WHL="$(ls "$DEPS"/downloads/pip-*-py3-none-any.whl 2>/dev/null | head -1 || true)"
 CACERT="$DEPS/downloads/cacert.pem"
-log "⑦ pip 树解包：$PIP_WHL → $ASSETS/Lib/site-packages/（剔除 wheel 内 bin/）"
+log "⑦ pip 树解包：$PIP_WHL → $STDROOT/site-packages/（剔除 wheel 内 bin/）"
 if [[ "$DRY_RUN" == 0 || "$COLLECT_ONLY" == 1 ]]; then
   [[ -n "$PIP_WHL" && -f "$PIP_WHL" ]] || err "pip wheel 缺失：$DEPS/downloads/（先跑 fetch）"
   [[ -f "$CACERT" ]] || err "cacert.pem 缺失：$CACERT（先跑 fetch）"
-  SP="$ASSETS/Lib/site-packages"; mkdir -p "$SP"
+  SP="$STDROOT/site-packages"; mkdir -p "$SP"
   unzip -qo "$PIP_WHL" -d "$SP"
   rm -rf "$SP/bin"
   log "⑦ pip 树就位（$(ls "$SP/pip" >/dev/null 2>&1 && echo 含 pip/ || echo 缺 pip/!)，bin/ 已剔除）"
@@ -347,8 +360,8 @@ EOS
   log "⑦ 壳脚本：$OUT/libpip.so、$OUT/libpip3.so（D6 入口，内容 sh 壳）"
 
   ENSUREPIP_FROM="${STDLIB_SRC:-$SRC/Lib}/ensurepip/_bundled"
-  mkdir -p "$ASSETS/ensurepip"
-  cp -R "$ENSUREPIP_FROM/." "$ASSETS/ensurepip/" 2>/dev/null || err "ensurepip wheels 缺失：$ENSUREPIP_FROM"
+  mkdir -p "$STDROOT/ensurepip/_bundled"
+  cp -R "$ENSUREPIP_FROM/." "$STDROOT/ensurepip/_bundled/" 2>/dev/null || err "ensurepip wheels 缺失：$ENSUREPIP_FROM"
   cp "$CACERT" "$ASSETS/cacert.pem"
   log "⑦ ensurepip wheels + cacert.pem 就位"
 fi

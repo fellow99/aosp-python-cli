@@ -274,7 +274,7 @@ public class MainActivity extends Activity {
         l.add(new Probe("TC-003-06", "sqlite3 闭环", py("-c",
                         "import sqlite3;c=sqlite3.connect(':memory:');c.execute('create table t(a)');"
                                 + "c.execute('insert into t values(42)');"
-                                + "print(list(c.execute('select a from t')))[0][0]"), null, null, 60_000,
+                                + "rows=list(c.execute('select a from t'));print(rows[0][0])"), null, null, 60_000,
                 o -> o.exit == 0 && o.stdout.contains("42") ? null : head(o.stdout + o.stderr)));
         l.add(new Probe("TC-003-07", "zlib 闭环", py("-c",
                         "import zlib;d=zlib.compress(b'aosp');print(zlib.decompress(d)==b'aosp')"), null, null, 60_000,
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
                 o -> o.exit == 0 && o.stdout.trim().matches("[0-9a-f]{16}") ? null : head(o.stdout + o.stderr)));
         // ── 003-cli：stdlib 与 -m ──
         l.add(new Probe("TC-003-10", "stdlib 导入抽查（ctypes 预期缺席）", py("-c",
-                        "import importlib\nmods=['json','os','sys','re','math','struct','socket','platform','uuid','sqlite3','zlib','hashlib','ssl']\n"
+                        "import importlib.util\nmods=['json','os','sys','re','math','struct','socket','platform','uuid','sqlite3','zlib','hashlib','ssl']\n"
                                 + "ok=[m for m in mods if importlib.util.find_spec(m)]\n"
                                 + "missing=[m for m in mods if not importlib.util.find_spec(m)]\n"
                                 + "print('OK',len(ok));print('MISSING',missing)\n"

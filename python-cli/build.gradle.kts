@@ -42,4 +42,10 @@ android {
             useLegacyPackaging = true
         }
     }
+    androidResources {
+        // python 树固有下划线目录（site-packages/pip/_internal、_vendor、ensurepip/_bundled…）
+        // 被 aapt 默认 ignoreAssetsPattern 的 `<dir>_*` token 整目录丢弃（2026-11-02 真机探针
+        // 实证：1078→631）。覆写去掉该 token；消费方 App 须同样覆写（见 docs §7 契约）。
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }
 }
