@@ -182,7 +182,7 @@ gen_setup_local() {  # $1 = 输出路径；$2 = 规范化 skip
       echo "zlib zlibmodule.c -lz"
     fi
     if [[ "$skip" != *" _sqlite3 "* && "$skip" != *" all "* ]]; then
-      echo "_sqlite3 _sqlite/blob.c _sqlite/connection.c _sqlite/cursor.c _sqlite/microprotocols.c _sqlite/module.c _sqlite/prepare_protocol.c _sqlite/row.c _sqlite/statement.c _sqlite/util.c -I$SQLITE_DIR $SQLITE_DIR/sqlite3.c"
+      echo "_sqlite3 _sqlite/blob.c _sqlite/connection.c _sqlite/cursor.c _sqlite/microprotocols.c _sqlite/module.c _sqlite/prepare_protocol.c _sqlite/row.c _sqlite/statement.c _sqlite/util.c sqlite3amalg.c -I$SQLITE_DIR"
     fi
     if [[ "$skip" == *" all "* ]]; then
       echo "# (--skip-extensions all：vendored 四件已裁 —— C4 显式降级，已写入 BUILD-METADATA)"
@@ -256,6 +256,9 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
   # Setup.local：vendored 覆盖 + 禁用段（configure 已传 MODULE_BUILDTYPE=static 全量转静态）。
   # ⚠ 树外构建：makesetup 只读【构建目录】的 Modules/Setup.local（CI 第八轮实证：写到源码树
   # 不生效 ⇒ _ssl/_sqlite3 落到 beeware prefix pkg-config 的改名共享库 libssl_python.so 等）。
+  # ⚠ makesetup 把源 token 原样拼进 .o 名（CI 第九轮实证：绝对路径源 ⇒ Modules//abs/path.o 非法）
+  # ⇒ amalgamation 复制进源码树 Modules/（构建注入，与 Setup.local 同类，不改上游文件）。
+  cp -f "$SQLITE_DIR/sqlite3.c" "$SRC/Modules/sqlite3amalg.c"
   SETUP_LOCAL="$HOST_BUILD_DIR/Modules/Setup.local"
   mkdir -p "$HOST_BUILD_DIR/Modules"
   log "③ Modules/Setup.local（vendored 覆盖+禁用段）→ $SETUP_LOCAL（skip='${SKIP_NORM:-无}'）"
