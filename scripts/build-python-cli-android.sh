@@ -225,19 +225,22 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
   log "③ configure（mode=$CONFIGURE_MODE）"
   if [[ "$CONFIGURE_MODE" == android ]]; then
     [[ -n "$ANDROID_SDK" ]] || err "android 模式需 --android-sdk 或 ANDROID_HOME（官方 android.py 要求）"
+    # android.py：HOST 用纯三元组（不带 API 后缀），API 经 ANDROID_API_LEVEL 环境变量
+    # 传入（Android/android-env.sh:6，默认 24）——CI 第四轮实证其 HOST choices 不含后缀。
+    HOST_TRIPLET="aarch64-linux-android"
     if [[ "$DRY_RUN" == 0 ]]; then
       ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" python3 Android/android.py configure-build && \
         ANDROID_HOME="$ANDROID_SDK" python3 Android/android.py make-build ) || err "官方 android.py build-python 阶段失败" 2
-      ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" LDFLAGS="$LDFLAGS_PY" \
-        python3 Android/android.py configure-host "$TARGET" -- \
+      ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" ANDROID_API_LEVEL="$API" LDFLAGS="$LDFLAGS_PY" \
+        python3 Android/android.py configure-host "$HOST_TRIPLET" -- \
           --disable-shared --with-static-libpython \
           "--with-openssl=$OPENSSL_PREFIX" ) || err "官方 android.py configure-host 失败" 2
     else
       log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK python3 Android/android.py configure-build"
       log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK python3 Android/android.py make-build"
-      log "  (dry-run) cd $SRC && LDFLAGS=$LDFLAGS_PY python3 Android/android.py configure-host $TARGET -- --disable-shared --with-static-libpython --with-openssl=$OPENSSL_PREFIX"
+      log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK ANDROID_API_LEVEL=$API LDFLAGS=$LDFLAGS_PY python3 Android/android.py configure-host $HOST_TRIPLET -- --disable-shared --with-static-libpython --with-openssl=$OPENSSL_PREFIX"
     fi
-    HOST_BUILD_DIR="$SRC/cross-build/$TARGET"
+    HOST_BUILD_DIR="$SRC/cross-build/$HOST_TRIPLET"
   else
     CONF_CMD="env CC=$CC CXX=${CC}++ AR=llvm-ar RANLIB=llvm-ranlib \
       LDFLAGS='$LDFLAGS_PY' $SRC/configure --host=$TARGET --with-build-python=$HOST_PY \
@@ -257,9 +260,10 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
   log "④ make -j$JOBS（$HOST_BUILD_DIR）"
   if [[ "$CONFIGURE_MODE" == android ]]; then
     if [[ "$DRY_RUN" == 0 ]]; then
-      ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" python3 Android/android.py make-host "$TARGET" ) || err "make-host 失败" 2
+      ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" ANDROID_API_LEVEL="$API" \
+        python3 Android/android.py make-host "$HOST_TRIPLET" ) || err "make-host 失败" 2
     else
-      log "  (dry-run) cd $SRC && python3 Android/android.py make-host $TARGET"
+      log "  (dry-run) cd $SRC && python3 Android/android.py make-host $HOST_TRIPLET"
     fi
   else
     run make -C "$HOST_BUILD_DIR" -j"$JOBS"
