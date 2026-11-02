@@ -127,9 +127,17 @@ jobs:
         with:
           python-version: ${{ env.PYVER }}
 
-      - name: Set up Android SDK + NDK ${{ env.NDK_VERSION }}
-        uses: android-actions/setup-android@v3
-      - run: sdkmanager "ndk;${{ env.NDK_VERSION }}" > /dev/null
+      - name: Install NDK ${{ env.NDK_VERSION }}（runner 预装 SDK；不适用 setup-android action——
+          其内置 sdkmanager "tools" 步骤在新版 SDK 仓库已下架该包而失败，2026-11-02 首跑实证）
+        run: |
+          set -e
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          CT="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin | head -1)"
+          echo "cmdline-tools: $CT"
+          yes | "$CT/sdkmanager" --licenses > /dev/null 2>&1 || true
+          yes | "$CT/sdkmanager" "ndk;${{ env.NDK_VERSION }}" > /dev/null
+          test -d "$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}" || { echo "::error::NDK 安装失败"; exit 1; }
+          echo "NDK 就位：$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

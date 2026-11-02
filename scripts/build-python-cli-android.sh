@@ -198,6 +198,8 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
     [[ -d "$OPENSSL_SRC" ]] || err "vendored OpenSSL 源缺失：$OPENSSL_SRC（先跑 fetch）"
     [[ -d "$SQLITE_DIR" ]] || err "sqlite amalgamation 缺失：$SQLITE_DIR（先跑 fetch）"
     mkdir -p "$OPENSSL_PREFIX"
+    # OpenSSL 的 android-* 目标以 ANDROID_NDK_ROOT 定位工具链（不读 CC）
+    export ANDROID_NDK_ROOT="$NDK"
     ( cd "$OPENSSL_SRC" && \
       CC="$CC" "$OPENSSL_SRC/Configure" android-arm64 no-shared \
         --libdir=lib --prefix="$OPENSSL_PREFIX" "-Wl,-z,max-page-size=16384" && \
