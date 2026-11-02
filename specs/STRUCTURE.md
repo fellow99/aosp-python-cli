@@ -78,14 +78,18 @@ aosp-python-cli/                        # node-bridge-workspace 的 git submodul
 
 ## 4. 目录 ↔ 模块编号映射
 
-本仓（M0 阶段）只有一个模块编号 `000-scaffold`，覆盖全仓骨架：
+模块编号沿用「FR-<模块号>-<序号>」段（规划 §10.2，2026-11-02 起五模块）：
 
 | 模块编号 | 覆盖范围（目录/文件） | spec 位置 |
 |---|---|---|
-| **000-scaffold** 工程搭建 | `settings.gradle.kts` · `gradle/` · `gradle.properties*` · `publish.gradle.kts` · `python-cli/build.gradle.kts` · `python-cli.lock.json` · `tools/provision.mjs` · `scripts/` · `.github/workflows/` · `.gitignore` · `THIRD-PARTY-NOTICES.md` · `README*` | [`000-scaffold/spec.md`](./000-scaffold/spec.md) |
-| M1+（交叉编译 / assets 投放 / 真机探针 / 发布） | 尚无对应目录与文件 | 规划 §4/§5/§7.1/§9（⬜ 未开工，规划引用） |
+| **000-scaffold** 工程搭建 | `settings.gradle.kts` · `gradle/` · `gradle.properties*` · `publish.gradle.kts` · `python-cli/build.gradle.kts` · `python-cli.lock.json` · `tools/provision.mjs`（骨架部分） · `.gitignore` · `THIRD-PARTY-NOTICES.md` · `README*` | [`000-scaffold/spec.md`](./000-scaffold/spec.md) |
+| **001-building** 构建（⬜） | `scripts/fetch-python-cli-source.mjs` · `scripts/build-python-cli-android.sh` · `tools/provision.mjs`（扩展部分） · lock `builtFrom.deps` · `.dist/` 工作区（不入库） | [`001-building/spec.md`](./001-building/spec.md) |
+| **002-building-workflow** 构建流水线（⬜） | `.github/workflows/build-python-cli-android.yml` · `tools/lock-writeback.mjs`（待建） | [`002-building-workflow/spec.md`](./002-building-workflow/spec.md) |
+| **003-cli** python 命令行（⬜） | 无专属代码目录（契约 + 用例模块；产物行为判据） | [`003-cli/spec.md`](./003-cli/spec.md) |
+| **101-pip-integration** pip 集成（⬜） | 无专属代码目录（契约 + 用例模块；实现载体在 001 步⑦） | [`101-pip-integration/spec.md`](./101-pip-integration/spec.md) |
+| M2+（探针 App 接入 / Maven Central / 跟随机制） | 尚无对应目录与文件 | 规划 §7.1/§10.1（⬜ 未开工，规划引用） |
 
-> 后续里程碑若立项（如 M1 交叉编译），应新增 `specs/001-*/` 目录并在本表登记，编号沿用 `FR-000-xxx` 之后的独立段（见 [`000-scaffold/spec.md`](./000-scaffold/spec.md) §3 编号规则）。
+> 后续里程碑若立项，应新增 `specs/<NNN>-*/` 目录并在本表登记（见 [`000-scaffold/spec.md`](./000-scaffold/spec.md) §3 编号规则与规划 §10.2）。
 
 ---
 
@@ -106,6 +110,10 @@ aosp-python-cli/                        # node-bridge-workspace 的 git submodul
 | `000-scaffold/plan.md` | 模块技术方案（本批新增，as-built） |
 | `000-scaffold/tasks.md` | 任务拆解（既有，保留，全部勾选） |
 | `000-scaffold/test-cases.md` | 测试用例 TC-01…09（既有，保留，含 2026-11-02 执行记录） |
+| `001-building/{spec,plan,tasks}.md` | 构建模块三件套（2026-11-02 立项 ⬜；FR-001-001…035） |
+| `002-building-workflow/{spec,plan,tasks}.md` | 构建流水线模块三件套（⬜；FR-002-001…009） |
+| `003-cli/{spec,plan,tasks,test-cases}.md` | python CLI 模块四件套（⬜；FR-003-001…014；TC-003-01…17） |
+| `101-pip-integration/{spec,plan,tasks,test-cases}.md` | pip 集成模块四件套（⬜；FR-101-001…012；TC-101-01…18） |
 
 ---
 

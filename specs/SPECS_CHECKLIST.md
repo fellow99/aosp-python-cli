@@ -30,7 +30,11 @@
 
 | # | 模块 | 目录 | spec.md | plan.md | tasks.md | test-cases.md | 状态 | 备注 |
 |---|---|---|---|---|---|---|---|---|
- | M-01 | 000-scaffold 工程搭建 | [`000-scaffold/spec.md`](./000-scaffold/spec.md) | ✅（既有，保留） | ✅（本批新增） | ✅（既有，保留；T1–T8 全勾） | ✅（既有，保留；TC-01…09 已执行） | ⚠️ | 骨架级完成；⚠️ 未闭合项：① CI 退出码断言在 `bash -e` 下不可达（plan §9 #1）；② 二进制未产出——七项门禁对真实产物、投放全链、放行告警不可测（属 M1）；③ lock 四值为 draft 空值/TBD（如实，待 M1 回写） |
+ | M-01 | 000-scaffold 工程搭建 | [`000-scaffold/spec.md`](./000-scaffold/spec.md) | ✅（既有，保留） | ✅（本批新增） | ✅（既有，保留；T1–T8 全勾） | ✅（既有，保留；TC-01…09 已执行） | ⚠️ | 骨架级完成；⚠️ 未闭合项：① CI 退出码断言在 `bash -e` 下不可达（plan §9 #1 → **002 已接修复**）；② 二进制未产出——七项门禁对真实产物、投放全链、放行告警不可测（属 M1）；③ lock 四值为 draft 空值/TBD（如实，待 M1 回写） |
+| M-02 | 001-building 构建 | [`001-building/spec.md`](./001-building/spec.md) | ✅（2026-11-02） | ✅ | ✅ | —（用例内嵌 tasks，host 子集随 dev 执行） | ⬜ 已立项 | FR-001-001…035；代码本批实现，重编译验证 ⬜ CI |
+| M-03 | 002-building-workflow 构建流水线 | [`002-building-workflow/spec.md`](./002-building-workflow/spec.md) | ✅（2026-11-02） | ✅ | ✅ | —（同上） | ⬜ 已立项 | FR-002-001…009；workflow 本批实现（含 000 缺陷 #1 修复），真实跑批 ⬜ |
+| M-04 | 003-cli python 命令行 | [`003-cli/spec.md`](./003-cli/spec.md) | ✅（2026-11-02） | ✅ | ✅ | ✅（TC-003-01…17） | ⬜ 已立项 | FR-003-001…014；host 子集本批执行，设备侧 ⬜ 待 CI 首产 + M2-T2 |
+| M-05 | 101-pip-integration pip 集成 | [`101-pip-integration/spec.md`](./101-pip-integration/spec.md) | ✅（2026-11-02） | ✅ | ✅ | ✅（TC-101-01…18） | ⬜ 已立项 | FR-101-001…012；host 子集本批执行，设备侧 ⬜（uv 组合 BLOCKED 机制） |
 
 **每模块 spec.md（WHAT/WHY）与 plan.md（HOW）成对提供**；000-scaffold 另有 tasks.md 与 test-cases.md（M0 为单模块工程，两者保留在模块目录内）。
 
@@ -66,10 +70,10 @@
 
 | 项 | 归属 | 依据 |
 |---|---|---|
-| `libpython_cli.so` 交叉编译（PEP 738 + 静态扩展 + OpenSSL/sqlite vendored） | ⬜M1（T1–T6） | 规划 §4/§10 |
-| fetch/build 脚本真实逻辑替换（现 exit 2 骨架） | ⬜M1-T1/T3 | 规划 §4.1/§4.2 |
-| provision 扩展（`--assets`/manifest/静态性检查/壳脚本白名单） | ⬜M1-T6 | 规划 §6 |
-| CI 真实流水线 + GitHub Release + lock 回写（**含修复退出码断言缺陷**） | ⬜M1-T7 | 规划 §9/§10.1；`000-scaffold/plan.md` §9 #1 |
-| 真机回程探针 P1–P6 | ⬜M2 | 规划 §7.1 |
+| `libpython_cli.so` 交叉编译（PEP 738 + 静态扩展 + OpenSSL/sqlite vendored） | ⬜M1（T1–T6）→ 模块 [001-building](./001-building/spec.md)（代码本批实现；编译验证 CI ⬜） | 规划 §4/§10/§10.2 |
+| fetch/build 脚本真实逻辑替换（现 exit 2 骨架） | ⬜M1-T1/T3 → [001-building](./001-building/tasks.md) T2/T3 | 规划 §4.1/§4.2 |
+| provision 扩展（`--assets`/manifest/静态性检查/壳脚本白名单） | ⬜M1-T6 → [001-building](./001-building/tasks.md) T4 | 规划 §6 |
+| CI 真实流水线 + GitHub Release + lock 回写（**含修复退出码断言缺陷**） | ⬜M1-T7 → [002-building-workflow](./002-building-workflow/tasks.md) | 规划 §9/§10.1；`000-scaffold/plan.md` §9 #1 |
+| 真机回程探针 P1–P6 | ⬜M2；用例正典已冻结于 [003-cli](./003-cli/test-cases.md) 与 [101-pip-integration](./101-pip-integration/test-cases.md) | 规划 §7.1 |
 | Maven Central 首发 + lock `published=true` | ⬜M3 | 规划 §10.1 |
-| Gradle Wrapper 引入 / `VERSION_NAME` 取舍 / CI setup-node | ⬜建议项 | `overall-plan.md` §6 #2/#3/#4 |
+| Gradle Wrapper 引入 / `VERSION_NAME` 取舍 | ⬜建议项（CI setup-node 已由 002 T1.2 接办） | `overall-plan.md` §6 #2/#3/#4 |

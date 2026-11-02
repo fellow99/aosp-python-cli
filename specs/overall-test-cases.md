@@ -1,8 +1,8 @@
 # overall-test-cases.md —— `aosp-python-cli` 全模块测试用例索引
 
-> **性质**：测试用例**索引**。用例正典在 [`000-scaffold/test-cases.md`](./000-scaffold/test-cases.md)（TC-01…TC-09，含 2026-11-02 执行记录）；本文按测试分层归位、给出执行状态与规划层的用例归属，**不复制用例正文**。
-> **依据**：`specs/constitution.md`（证据纪律 §三）· `000-scaffold/test-cases.md`（执行记录 ✅）· `../docs/000-工程规划.md`（规划 §7.1 探针、§12 门禁——⬜规划引用）。
-> **版本**：v1.0 · 2026-11-02 · 状态：M0 用例 9/9 已执行全过；M1/M2 层无用例（未开工，如实登记）。
+> **性质**：测试用例**索引**。用例正典分布：[`000-scaffold/test-cases.md`](./000-scaffold/test-cases.md)（TC-01…TC-09，含 2026-11-02 执行记录）· [`003-cli/test-cases.md`](./003-cli/test-cases.md)（TC-003-01…17）· [`101-pip-integration/test-cases.md`](./101-pip-integration/test-cases.md)（TC-101-01…18）；本文按测试分层归位、给出执行状态与规划层的用例归属，**不复制用例正文**。
+> **依据**：`specs/constitution.md`（证据纪律 §三）· 各模块 test-cases.md · `../docs/000-工程规划.md`（规划 §7.1 探针、§12 门禁、§10.2 模块划分——⬜规划引用）。
+> **版本**：v1.1 · 2026-11-02 · 状态：M0 用例 9/9 已执行全过；001/002 的 host 侧用例随本批 dev 执行；003/101 设备侧用例已立项（⬜ 待 CI 首产，如实登记）。
 
 ---
 
@@ -14,10 +14,11 @@
 | L2 构建配置门 | 构建系统任务图求值与产物产出 | TC-01、TC-02、TC-03 | ✅ 已执行 |
 | L3 工具语义门 | 退出码纪律（0/2/1）与文案 | TC-05、TC-06、TC-07 | ✅ 已执行 |
 | L4 仓库卫生门 | git 视角的不入库断言 | TC-09 | ✅ 已执行 |
-| L5 门禁全链（真实二进制七项门禁 + 清单校验） | 真实产物 | ⬜ 无用例——M1 首产后按规划 §12 立项 | 未开工 |
-| L6 真机回程探针（PTY 内 python/pip） | 规划 §7.1 P1–P6 | ⬜ 无用例——M2 立项 | 未开工 |
+| L5 门禁/投放全链（七项门禁 + manifest 校验 + 白名单） | 产物/fixtures | TC-003-16/17、TC-101-15…18（host，合成 fixture 驱动）＋ 真实产物 ⬜ CI 首产后 | 已立项；host 子集随本批 dev 执行 |
+| L6 真机回程探针（PTY 内 python/pip） | 规划 §7.1 P1–P6 | TC-003-01…15（P1/P2/P3/P6）、TC-101-01…14（P4/P5）——正典在模块目录 | 已立项；⬜ 待 CI 首产 + M2-T2 |
 
-> M0 阶段 **L5/L6 刻意为空**：仓内不存在二进制，任何「门禁全过/真机可用」的说法都会违反宪法 C6（未实测标 ⬜）。
+> L5 的 host 子集以**合成 ELF fixture + stdlib 替身**验证投放链（不断言解释器行为）；L6 全部
+> ⬜——仓内无二进制，任何「真机可用」的说法都必须等 PTY 回程证据（C6）。
 
 ---
 
@@ -36,6 +37,16 @@
 | TC-09 | 二进制不入库（`git status --porcelain` 无 jniLibs/assets 条目） | C3 · FR（卫生） | ✅ |
 
 > 执行环境：Windows + Gradle 9.4.1 + Temurin 21（`000-scaffold/test-cases.md` 头注）。
+
+### 2.1 新模块用例索引（2026-11-02 立项）
+
+| 模块 | 正典位置 | 用例段 | 环境 | 状态 |
+|---|---|---|---|---|
+| 001-building | tasks T2/T3/T4 内嵌（fetch/build/provision 各步验收） | TC-001-xx（host 子集） | host | 随本批 dev 执行；CI 子集 ⬜ |
+| 002-building-workflow | tasks T4 内嵌（YAML/断言模式/结构） | TC-002-xx | host | 随本批 dev 执行；跑批 ⬜ |
+| 003-cli | [`003-cli/test-cases.md`](./003-cli/test-cases.md) | TC-003-01…15（device）/ 16…17（host） | host+device | host 随本批执行；device ⬜ |
+| 101-pip-integration | [`101-pip-integration/test-cases.md`](./101-pip-integration/test-cases.md) | TC-101-01…14（device）/ 15…18（host） | host+device | host 随本批执行；device ⬜（uv 组合 BLOCKED 机制） |
+
 
 ---
 

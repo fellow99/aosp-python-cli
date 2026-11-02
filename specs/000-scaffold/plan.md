@@ -213,9 +213,9 @@
 
 | # | 项 | 事实 | 归属 |
 |---|---|---|---|
-| 1 | CI 退出码断言不可达 | workflow:34-40：GitHub Actions 默认 `bash -eo pipefail`，`node tools/provision.mjs --check` 退出 2 时 shell 在 `code=$?` 前终止，断言分支永不执行；步骤「红」的症状掩盖了断言从未生效的事实 | M1-T7 重写流水线时修复（`|| code=$?` 模式）；本批不改 workflow（边界约束） |
-| 2 | `VERSION_NAME=0.1.0` 残留 | 与 `CLI_VERSION=3.14.0` 并存；坐标版本唯一取 CLI_VERSION，`VERSION_NAME` 仅 vanniktech pom 属性隐式消费 | 建议删除或加注；属 gradle.properties 一行改动，超出本批 specs-only 边界，仅登记 |
-| 3 | 规划 M1 的 `libpip*.so` 壳脚本与现行白名单冲突 | 现行 `--check` 把 jniLibs 内任何第二个 `.so` 判不合格；规划 §6「M1 新增④」已登记壳脚本白名单扩展 | M1-T6 实现时同步扩白名单（规划已覆盖，无文档缺口） |
+| 1 | CI 退出码断言不可达 | workflow:34-40：GitHub Actions 默认 `bash -eo pipefail`，`node tools/provision.mjs --check` 退出 2 时 shell 在 `code=$?` 前终止，断言分支永不执行；步骤「红」的症状掩盖了断言从未生效的事实 | → **002-building-workflow FR-002-004 接办**（`|| code=$?` 模式；2026-11-02 立项，workflow 重写随本批 dev） |
+| 2 | `VERSION_NAME=0.1.0` 残留 | 与 `CLI_VERSION=3.14.0` 并存；坐标版本唯一取 CLI_VERSION，`VERSION_NAME` 仅 vanniktech pom 属性隐式消费 | 建议删除或加注；属 gradle.properties 一行改动——**002 dev 批处置（加注说明）**，删除待维护者拍板 |
+| 3 | 规划 M1 的 `libpip*.so` 壳脚本与现行白名单冲突 | 现行 `--check` 把 jniLibs 内任何第二个 `.so` 判不合格；规划 §6「M1 新增④」已登记壳脚本白名单扩展 | → **001-building FR-001-033 接办**（2026-11-02 立项，随本批 dev 实现白名单扩展） |
 | 4 | lock `gates` 七键在 draft 期全为 `true` | 语义是「门禁项已启用」而非「已验证通过」；工具实际以字段存在性/哈希空值判 draft（`:141-142`），不受误导 | 保持；M1 回写时可在 `$comment` 补一句键义说明 |
 
 > [NEEDS CLARIFICATION]（≤3，全部为实现层待办、不影响规格成立）：① `provision.mjs:263` 的 `paired.runtime` 属性行在 python-cli 永不触发（lock 无该字段）——是否删除该兼容分支，M1 时定；② workflow 的 provision 步骤预期文案与 `bash -e` 行为的最终修法（§9 #1）属 M1-T7；③ `VERSION_NAME` 去留（§9 #2）待维护者拍板。

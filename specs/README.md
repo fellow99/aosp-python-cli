@@ -1,11 +1,11 @@
 # 规格文档索引 —— `aosp-python-cli`
 
 **项目名称：** `aosp-python-cli`（Maven 坐标 `io.github.fellow99:python-cli`）
-**需求：** **000-scaffold 工程搭建** · 规范文档存放目录：`specs/`
+**需求：** 多模块：000-scaffold（已完成）· 001-building · 002-building-workflow · 003-cli · 101-pip-integration（后四者 2026-11-02 立项，见规划 §10.2） · 规范文档存放目录：`specs/`
 **工程版本：** `3.14.0`（draft；= CPython 上游计划版本，独立 semver，以 CI 实际钉选为准）
-**技术栈：** Gradle 9.4.1 + AGP 9.2.1（AAR 容器，arm64-v8a，`useLegacyPackaging=true`）+ vanniktech 0.37.0 发布面 + 纯 Node exec 型 ELF 门禁（`tools/provision.mjs`）+ draft 事实源 `python-cli.lock.json`；M1 规划：PEP 738 交叉编译 + OpenSSL/sqlite vendored
-**文档生成时间：** 2026-11-02 · **最后更新：** 2026-11-02
-**as-built 口径：** 只描述**已建成的事实**（M0 脚手架）；`docs/000-工程规划.md` 中 M1+ 的设计一律以「⬜规划 + § 号」引用，**不把规划当现实**。python 本体二进制**尚未构建**（M1）。
+**技术栈：** Gradle 9.4.1 + AGP 9.2.1（AAR 容器，arm64-v8a，`useLegacyPackaging=true`）+ vanniktech 0.37.0 发布面 + 纯 Node exec 型 ELF 门禁（`tools/provision.mjs`）+ draft 事实源 `python-cli.lock.json`；M1 立项：PEP 738 交叉编译 + OpenSSL/sqlite vendored（代码本批实现，重编译验证 ⬜ CI）
+**文档生成时间：** 2026-11-02 · **最后更新：** 2026-11-02（新增四模块规格）
+**as-built 口径：** 只描述**已建成的事实**（M0 脚手架 ✅；M1 代码 ⬜ 本批实现中）；`docs/000-工程规划.md` 中 M1+ 的设计一律以「⬜规划 + § 号」引用，**不把规划当现实**。python 本体二进制**尚未构建**（M1，CI）。
 
 > **权威规划文档是 [`../docs/000-工程规划.md`](../docs/000-工程规划.md)（v2.1）。**
 > 本目录是它的 **as-built 收敛/展开版**：只做已建成事实的细化与验收，不复制粘贴规划；实现与规划的偏差登记在 [`overall-plan.md`](./overall-plan.md) §6 与 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §9。
@@ -20,8 +20,12 @@
 | 整体 | 项目级顶层文档 | 5 | `constitution.md` · `ARCHITECTURE.md` · `TECH.md` · `STRUCTURE.md` · `SPECS_CHECKLIST.md` |
 | 整体 | 整体规格文档 | 3 | `overall-spec.md` · `overall-plan.md` · `overall-test-cases.md` |
 | 模块 | 000-scaffold 工程搭建 | 4 | `spec.md`（既有）· `plan.md`（新增）· `tasks.md` · `test-cases.md` |
+| 模块 | 001-building 构建 | 3 | `spec.md` · `plan.md` · `tasks.md`（2026-11-02 立项，⬜） |
+| 模块 | 002-building-workflow 构建流水线 | 3 | `spec.md` · `plan.md` · `tasks.md`（⬜） |
+| 模块 | 003-cli python 命令行 | 4 | `spec.md` · `plan.md` · `tasks.md` · `test-cases.md`（TC-003-01…17，⬜） |
+| 模块 | 101-pip-integration pip 集成 | 4 | `spec.md` · `plan.md` · `tasks.md` · `test-cases.md`（TC-101-01…18，⬜） |
 | 索引 | 本索引 | 1 | `README.md` |
- | **合计** | **2 目录 / 13 文件** | | 顶层 9 份 + 模块 4 份，共 **1361 行**（2026-11-02 实测 `wc -l`，含本 README） |
+ | **合计** | **5 模块目录 / 27 文件** | | 顶层 9 份 + 模块 18 份（2026-11-02 实测 `wc -l` 2252 行，含本 README） |
 
 > **刻意不生成** `API.md` / `overall-api.md` / `overall-data-model.md`（需求方排除）：本仓**不含任何嵌入 API**，无 API 契约面；工具 CLI 契约在 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §5，lock 数据模型（唯一数据实体）在 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §4。
 
@@ -60,6 +64,15 @@
 | 任务拆解 | [000-scaffold/tasks.md](./000-scaffold/tasks.md) | T1–T8 全部勾选 ✅（既有文件，保留） |
 | 测试用例 | [000-scaffold/test-cases.md](./000-scaffold/test-cases.md) | TC-01…09 + 2026-11-02 执行记录（9/9 通过）（既有文件，保留） |
 
+### 四.1 新立模块（2026-11-02，全部 ⬜）
+
+| 模块 | spec / plan / tasks / test-cases | 要点 |
+|---|---|---|
+| [001-building](./001-building/spec.md) | ✅/✅/✅/—（用例内嵌 tasks） | 五源 fetch、交叉编译八步、pip 壳脚本、provision 扩展（assets/manifest/静态性/白名单）；FR-001-001…035 |
+| [002-building-workflow](./002-building-workflow/spec.md) | ✅/✅/✅/— | CI 双 Job（gate+release）、退出码断言缺陷修复、归档与 lock 回写物；FR-002-001…009 |
+| [003-cli](./003-cli/spec.md) | ✅/✅/✅/✅（TC-003-01…17） | python 命令行为契约 + 探针 P1/P2/P3/P6 用例正典；FR-003-001…014 |
+| [101-pip-integration](./101-pip-integration/spec.md) | ✅/✅/✅/✅（TC-101-01…18） | pip 直出/安装/边界拒绝/ensurepip 兜底/uv 组合（P4/P5）用例正典；FR-101-001…012 |
+
 ---
 
 ## 五、模块编号一览
@@ -67,9 +80,13 @@
 | 编号 | 模块名 | 英文名 | 状态 | FR 段 |
 |---|---|---|---|---|
 | **000** | 工程搭建（scaffold） | scaffold | ✅ 已实现（骨架级） | FR-000-001…042 |
-| 001+ | 交叉编译 / assets 投放 / 真机验收 / 发布（若立项） | — | ⬜ 未开始（规划 §10 里程碑 M1–M4） | 届时新增独立 FR 段 |
+| **001** | 构建 | building | ⬜ 已立项（代码本批实现；编译验证 CI ⬜） | FR-001-001…035 |
+| **002** | 构建流水线 | building-workflow | ⬜ 已立项（workflow 本批实现；跑批 ⬜） | FR-002-001…009 |
+| **003** | python 命令行 | cli | ⬜ 契约冻结（执行待 CI 首产 + M2-T2） | FR-003-001…014 |
+| **101** | pip 集成 | pip-integration | ⬜ 契约冻结（同上；uv 组合外部依赖） | FR-101-001…012 |
 
-> 规划 §10 的 M1/M2/M3/M4 是**里程碑**而非已立模块编号；为其立项时应新增 `specs/001-*/` 等目录并同步本表与 [`SPECS_CHECKLIST.md`](./SPECS_CHECKLIST.md)。
+> 编号约定（规划 §10.2）：`0NN` = 构建工程/产品域（000–003），`1NN` = 设备侧集成域（101 起）。
+> FR 段唯一权威定义处在各模块 `spec.md`；里程碑（M1–M4）与模块映射见规划 §10/§10.2。
 
 ---
 

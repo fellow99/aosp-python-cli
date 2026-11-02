@@ -3,6 +3,10 @@
 > 模块：000-scaffold · 状态：已实现（scaffold 级）
 > 所属工程：aosp-python-cli · 规划基线：[`docs/000-工程规划.md`](../../docs/000-工程规划.md)
 > （pty 仓的 spec/plan/test-cases 四件套在本仓折叠为三件。）
+> 2026-11-02 模块化拆分：M1/M2 工作按规划 §10.2 拆入
+> [001-building](../001-building/spec.md) · [002-building-workflow](../002-building-workflow/spec.md) ·
+> [003-cli](../003-cli/spec.md) · [101-pip-integration](../101-pip-integration/spec.md)；
+> 本模块保持「骨架 + 既有接口」的事实源，其登记缺陷 #1/#3 由 002/001 接办（见 plan §9）。
 
 ## 1. 目的
 
