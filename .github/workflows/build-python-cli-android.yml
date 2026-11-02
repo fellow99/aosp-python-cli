@@ -1,20 +1,36 @@
-name: CI (scaffold) — aosp-python-cli
+name: CI — aosp-python-cli
 
-# 000-scaffold 阶段的 CI 只做「配置期门禁」：
-#   - Gradle 配置/任务求值（无 .so 也必须通过 —— FR：二进制缺失不阻碍配置期）
-#   - provision.mjs 语法与退出码纪律自检（未投放 = 退出码 2 = 预期）
-# 真实的交叉编译 + 门禁 + Release 流水线在 M1 接入（替换本文件）。
+# 002-building-workflow（FR-002-001…009）：
+#   gate    —— 配置期门禁（push/PR/dispatch 全触发；无产物机器可跑，FR-000-040~042 语义保留）
+#   release —— 真实构建流水线（仅 tag v<pyver> 或手动 dispatch 触发；needs gate）
+# 已知修复（000-scaffold 缺陷 #1）：预期非零退出的断言一律用 `|| code=$?` 先捕获后断言，
+# 使 GitHub Actions 默认 `bash -eo pipefail` 不再吞掉断言分支（FR-002-004）。
 on:
   push:
     branches: [main]
+    tags: ['v*'] # tag v<pyver> 推送触发 release 流水线（FR-002-003）
   pull_request:
   workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'CPython 版本（须已在 python-cli.lock.json 登记，如 3.14.10）'
+        required: false
+        default: ''
 
 permissions:
   contents: read
 
+env:
+  # 装机钉版矩阵（FR-002-002；⬜ 首跑实测后如需调整只改这一块）
+  GRADLE_VERSION: '9.4.1'
+  NODE_VERSION: '20'
+  JAVA_VERSION: '21'
+  NDK_VERSION: '28.2.13676358' # r28c 线 ⬜ 首跑核对
+  ANDROID_API: '24'
+
 jobs:
-  config-check:
+  gate:
+    # 所有触发都跑（含 tag push：release needs gate，若 gate 被 skip 会连带 skip release）
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -24,27 +40,177 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Set up Gradle 9.4.1
+      - name: Set up Node 20（修复 000 登记 #4：显式 setup-node）
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up Gradle ${{ env.GRADLE_VERSION }}
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.4.1'
+          gradle-version: ${{ env.GRADLE_VERSION }}
 
-      - name: Gradle configuration gate（无 .so 必须可配置）
-        run: gradle :python-cli:tasks --console=plain
-
-      - name: provision.mjs syntax + exit-code discipline
+      - name: 工具语法门（FR-000-042）
         run: |
           node --check tools/provision.mjs
-          # 未投放产物时 --check 的预期退出码是 2（未投放），其它非零码视为工具缺陷。
-          node tools/provision.mjs --check
-          code=$?
-          if [ "$code" -ne 2 ]; then
-            echo "provision --check 退出码=$code（预期 2=未投放）"; exit 1
-          fi
-
-      - name: scripts syntax
-        run: |
+          node --check tools/make-elf-fixture.mjs
           node --check scripts/fetch-python-cli-source.mjs
           bash -n scripts/build-python-cli-android.sh
+
+      - name: 合成夹具自检（七项门禁两侧）
+        run: |
+          node tools/make-elf-fixture.mjs --out .dist/fixtures/ok.so
+          node tools/provision.mjs --inspect .dist/fixtures/ok.so
+          code=0
+          node tools/make-elf-fixture.mjs --out .dist/fixtures/bad.so --broken interp
+          node tools/provision.mjs --inspect .dist/fixtures/bad.so || code=$?
+          if [ "$code" -ne 2 ]; then
+            echo "::error::expected exit 2 for broken fixture, got $code"; exit 1
+          fi
+
+      - name: Gradle 配置门（无 .so 必须可配置，FR-000-040/005）
+        run: gradle :python-cli:tasks --console=plain
+
+      - name: provision --check 未投放语义（FR-000-032；断言可达，000 缺陷 #1 修复样板）
+        run: |
+          code=0
+          node tools/provision.mjs --check || code=$?
+          if [ "$code" -ne 2 ]; then
+            echo "::error::provision --check 退出码=$code（预期 2=未投放）"; exit 1
+          fi
+
+  release:
+    if: >
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.python_version != '')
+    needs: gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: write # 仅本 Job 需要（Release 资产上传）
+    env:
+      PYVER: ${{ github.event_name == 'workflow_dispatch' && inputs.python_version || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: resolve 版本（tag 去 v 前缀；与 lock active 断言）
+        run: |
+          PYVER="${PYVER#v}"
+          echo "PYVER=$PYVER" >> "$GITHUB_ENV"
+          ACTIVE=$(node -e "console.log(require('./python-cli.lock.json').active.version)")
+          if [ "$PYVER" != "$ACTIVE" ]; then
+            echo "::error::tag/dispatch 版本 $PYVER ≠ lock active $ACTIVE（先在 lock 登记 releases 条目）"; exit 1
+          fi
+          echo "目标：$PYVER"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up host build python ${{ env.PYVER }}（FR-001-010 前置）
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYVER }}
+
+      - name: Set up Android SDK + NDK ${{ env.NDK_VERSION }}
+        uses: android-actions/setup-android@v3
+      - run: sdkmanager "ndk;${{ env.NDK_VERSION }}" > /dev/null
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: 五源缓存（fetch 可重入保证命中正确性，FR-002-008）
+        uses: actions/cache@v4
+        with:
+          path: .dist/src
+          key: fetch-${{ env.PYVER }}-${{ hashFiles('python-cli.lock.json') }}
+          restore-keys: fetch-${{ env.PYVER }}-
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ccache-${{ env.NDK_VERSION }}-${{ env.PYVER }}
+
+      - name: fetch 五源（钉选 + sha256 校验 + 解压）
+        run: node scripts/fetch-python-cli-source.mjs --python "$PYVER" --out .dist/src
+
+      - name: host python 版本断言（FR-001-010）
+        run: |
+          HOST_PY="$(command -v python)"
+          PYV="$("$HOST_PY" --version | awk '{print $2}')"
+          if [ "$PYV" != "$PYVER" ]; then
+            echo "::error::host python $PYV ≠ 目标 $PYVER"; exit 1
+          fi
+
+      - name: 交叉编译（001 八步：vendored OpenSSL/Setup.local/configure/make/strip/归集/元数据）
+        run: |
+          bash scripts/build-python-cli-android.sh \
+            --python "$PYVER" --api "$ANDROID_API" \
+            --src .dist/src/cpython --deps .dist/src \
+            --ndk "$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}" \
+            --android-sdk "$ANDROID_HOME" \
+            --host-python "$(command -v python)" \
+            --out .dist/out
+
+      - name: 门禁 + 投放（jniLibs 含壳脚本；assets 含 manifest）
+        run: |
+          node tools/provision.mjs --out python-cli/src/main/jniLibs --from .dist/out/libpython_cli.so
+          node tools/provision.mjs --assets .dist/out/stdlib-assets
+          node tools/provision.mjs --check
+
+      - name: AAR 组装（归档一并验证）
+        run: gradle :python-cli:assembleRelease --console=plain
+
+      - name: 打包归档 + sha256 侧车（FR-002-005）
+        run: |
+          PKG="python-cli-v$PYVER-android-arm64-v8a"
+          mkdir -p ".dist/pkg/$PKG"
+          cp .dist/out/libpython_cli.so .dist/out/libpip.so .dist/out/libpip3.so ".dist/pkg/$PKG/"
+          cp -R .dist/out/stdlib-assets ".dist/pkg/$PKG/stdlib-assets"
+          cp .dist/out/BUILD-METADATA.txt .dist/out/FETCH-METADATA.json ".dist/pkg/$PKG/"
+          cp LICENSE ".dist/pkg/$PKG/LICENSE"
+          cp python-cli/THIRD-PARTY-NOTICES.md ".dist/pkg/$PKG/"
+          cp python-cli/build/outputs/aar/python-cli-release.aar ".dist/pkg/$PKG/" || true
+          tar -czf ".dist/pkg/$PKG.tar.gz" -C .dist/pkg "$PKG"
+          ( cd .dist/pkg && sha256sum "$PKG.tar.gz" > "$PKG.tar.gz.sha256" )
+
+      - name: lock 回写物（FR-002-007：artifact 供维护者 PR，不 push main）
+        run: |
+          node tools/lock-writeback.mjs \
+            --from .dist/out/libpython_cli.so \
+            --build-meta .dist/out/BUILD-METADATA.txt \
+            --out-dir .dist/writeback
+
+      - name: 上传构建证据 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-evidence
+          path: |
+            .dist/out/BUILD-METADATA.txt
+            .dist/out/FETCH-METADATA.json
+            .dist/writeback/
+
+      - name: GitHub Release（tag 钉 commit，FR-002-006）
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            .dist/pkg/*.tar.gz
+            .dist/pkg/*.tar.gz.sha256
+
+      - name: 上传归档 artifact（dispatch 场景无 Release，仍可取件）
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-archive
+          path: .dist/pkg/
