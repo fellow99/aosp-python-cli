@@ -136,9 +136,11 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
 fi
 
 # ── ③ vendored 依赖前缀 + Setup.local 静态段（FR-001-011/012）───────────────
+# 绝对化（CI 实证 2026-11-02：子 shell cd 后相对路径 .dist/… 失效 ⇒ Configure ENOENT）
+OUT="$(cd "$(dirname "$OUT")" && pwd)/$(basename "$OUT")"
 OPENSSL_PREFIX="$OUT/deps/openssl"        # 本仓 vendored 静态 OpenSSL 安装前缀
-SQLITE_DIR="$DEPS/sqlite"                 # amalgamation 目录（sqlite3.c/.h）
-OPENSSL_SRC="$DEPS/openssl"               # vendored OpenSSL 源码树（fetch 解压）
+SQLITE_DIR="$(cd "$DEPS/sqlite" 2>/dev/null && pwd || echo "$DEPS/sqlite")"
+OPENSSL_SRC="$(cd "$DEPS/openssl" 2>/dev/null && pwd || echo "$DEPS/openssl")"
 
 # 静态段起步集（FR-001-012 冻结：_ssl/_hashlib/zlib/_sqlite3 —— zlib 必须入段，评审 #1：
 # 不入段的模块会落 lib-dynload 动态 .so，本管线永不随包 ⇒ 设备 import 失败 = 静默降级 C4）。

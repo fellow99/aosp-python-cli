@@ -457,7 +457,9 @@ public class MainActivity extends Activity {
                         }
                     }
                     Out o = exec(p.argv, env, p.stdin, p.timeoutMs);
-                    String verdict = o.failReason != null ? "FAIL:" + o.failReason : p.check.check(o);
+                    // 判据统一交给 check()：预期失败类探针（如 filesDir 不可 exec、uv 缺席）
+                    // 需要看到 failReason/非零退出码本身，不得在 runner 层抢先判 FAIL。
+                    String verdict = p.check.check(o);
                     String tag = verdict == null ? "PASS"
                             : verdict.startsWith("BLOCKED") ? "BLOCKED"
                             : verdict.startsWith("PASS-") ? "PASS"
