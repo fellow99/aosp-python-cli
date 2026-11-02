@@ -215,7 +215,6 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
     log "  (dry-run) cd $OPENSSL_SRC && CC=$CC ./Configure android-arm64 no-shared --prefix=$OPENSSL_PREFIX … && make -j$JOBS && make install_sw"
   fi
 
-  SETUP_LOCAL="$SRC/Modules/Setup.local"
   SKIP_NORM="$(normalize_skip)"
   log "③ configure（mode=$CONFIGURE_MODE；Setup.local 在 configure 后生成——需要其 Setup.stdlib 探测结果）"
 
@@ -254,7 +253,11 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
     HOST_BUILD_DIR="$OUT/build"
   fi
 
-  # Setup.local：vendored 覆盖 + 禁用段（configure 已传 MODULE_BUILDTYPE=static 全量转静态）
+  # Setup.local：vendored 覆盖 + 禁用段（configure 已传 MODULE_BUILDTYPE=static 全量转静态）。
+  # ⚠ 树外构建：makesetup 只读【构建目录】的 Modules/Setup.local（CI 第八轮实证：写到源码树
+  # 不生效 ⇒ _ssl/_sqlite3 落到 beeware prefix pkg-config 的改名共享库 libssl_python.so 等）。
+  SETUP_LOCAL="$HOST_BUILD_DIR/Modules/Setup.local"
+  mkdir -p "$HOST_BUILD_DIR/Modules"
   log "③ Modules/Setup.local（vendored 覆盖+禁用段）→ $SETUP_LOCAL（skip='${SKIP_NORM:-无}'）"
   if [[ "$DRY_RUN" == 1 ]]; then
     gen_setup_local /dev/stdout "$SKIP_NORM" | sed 's/^/  | /'
