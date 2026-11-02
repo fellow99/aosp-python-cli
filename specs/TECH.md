@@ -54,7 +54,7 @@
 | 维度 | 值 | 来源 |
 |---|---|---|
 | 制品坐标 | `io.github.fellow99:python-cli:<CLI_VERSION>` | `publish.gradle.kts:33-39` ✅ |
-| 当前版本（draft） | `3.14.0`（= CPython 上游计划版本；M1 以 CI 实际可构建最新稳定版钉选回写） | `gradle.properties:9` · `python-cli.lock.json` active ✅ |
+| 当前版本（draft） | `3.14.0`（= CPython 上游计划版本；M1 以 CI 实际可构建最新稳定版钉选回写） | `gradle.properties:8` · `python-cli.lock.json` active ✅ |
 | ABI | 仅 `arm64-v8a`（明确不做 x86/x86_64/arm32） | 模块 `abiFilters` · lock `matrix.abi` ✅ |
 | Android | `minSdk 24` · `compileSdk 36` · 目标 API（交叉编译 `--api` 默认 24） | `build.gradle.kts` · lock `releases[0].androidApi` · build 脚本 ✅ |
 | 依赖白名单 | `libc.so` `libm.so` `libdl.so` `libz.so` `liblog.so`（仅系统库；lock 登记可扩展） | lock `matrix.allowedNeeded` ✅ |

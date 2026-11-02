@@ -13,10 +13,10 @@
 
 | 项 | 值 | 证据 |
 |---|---|---|
-| 构建编排 | Gradle **9.4.1**（CI `gradle/actions/setup-gradle@v4` 钉定；**仓内无 wrapper** ⚠️） | `.github/workflows/build-python-cli-android.yml:26-29` |
+| 构建编排 | Gradle **9.4.1**（CI `gradle/actions/setup-gradle@v4` 钉定；**仓内无 wrapper** ⚠️） | `.github/workflows/build-python-cli-android.yml:29-32` |
 | Android 插件 | AGP **9.2.1**（`gradle/libs.versions.toml` 唯一版本项） | 同文件 |
 | 发布插件 | `com.vanniktech.maven.publish.base` **0.37.0**（pluginManagement 直载，非 buildscript 依赖） | `settings.gradle.kts:3-5` |
-| JDK | Temurin **21** | workflow:19-24；test-cases 头注 |
+| JDK | Temurin **21** | workflow:23-27；test-cases 头注 |
 | host JS 运行时 | Node（本机 v24.7.0 实测可跑全部工具）；CI 未显式 setup-node ⚠️ | workflow:34-48 |
 | 模块 SDK 面 | `compileSdk 36` · `minSdk 24` · `abiFilters=[arm64-v8a]` · `useLegacyPackaging=true` | `python-cli/build.gradle.kts:22-42` |
 | 目标版本（draft） | CPython **3.14.0** = `CLI_VERSION`（未设置任何一处构建即失败） | `gradle.properties:8`；`python-cli/build.gradle.kts:16-17` |

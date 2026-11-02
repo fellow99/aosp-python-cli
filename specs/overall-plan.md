@@ -13,12 +13,12 @@
 | 面 | 值 | 证据 ✅ |
 |---|---|---|
 | 宿主工程 | `node-bridge-workspace` 的 git submodule；分支 `main` | `.git`（gitdir 指针）、git log |
-| 构建编排 | Gradle 9.4.1（CI `gradle/actions/setup-gradle@v4` 钉定；仓内无 Wrapper ⚠️） | `.github/workflows/build-python-cli-android.yml:26-29` |
+| 构建编排 | Gradle 9.4.1（CI `gradle/actions/setup-gradle@v4` 钉定；仓内无 Wrapper ⚠️） | `.github/workflows/build-python-cli-android.yml:29-32` |
 | Android 插件 | AGP 9.2.1（`gradle/libs.versions.toml` 唯一项） | 同文件 |
 | 发布面 | vanniktech `com.vanniktech.maven.publish.base` 0.37.0（`settings.gradle.kts` pluginManagement 直载） | `settings.gradle.kts:3-5` |
 | host 工具链 | Node（本机 v24.7.0 实测；CI 未显式钉版 ⚠️）+ bash | `node --version`；workflow `run:` 块 |
 | CI runner | `ubuntu-24.04` · Temurin JDK 21 · timeout 20min · `permissions: contents: read` | workflow:16-33 |
-| 仓库内 Android SDK | compileSdk 36 / minSdk 24 / `abiFilters=[arm64-v8a]` | `python-cli/build.gradle.kts:22-30` |
+| 仓库内 Android SDK | compileSdk 36 / minSdk 24 / `abiFilters=[arm64-v8a]` | `python-cli/build.gradle.kts:22-32` |
 
 ### 1.2 关键依赖与版本（发布坐标链）
 
