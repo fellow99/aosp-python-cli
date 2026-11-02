@@ -326,9 +326,16 @@ if [[ "$DRY_RUN" == 0 || "$COLLECT_ONLY" == 1 ]]; then
   PYC=$(find "$STDROOT" -name '*.pyc' -type f | wc -l)
   find "$STDROOT" -name '*.pyc' -type f -delete 2>/dev/null || true
   # 构建期生成的平台数据模块（sysconfig 依赖；pip/ensurepip 启动链必需——探针实证 2026-11-02）
-  SYSCFG_SRC_DIR="$HOST_BUILD_DIR/build/lib/python3.14"
-  if [[ "$COLLECT_ONLY" == 1 && -n "$SYSCFG_FROM" ]]; then SYSCFG_SRC_DIR="$SYSCFG_FROM"; fi
-  if compgen -G "$SYSCFG_SRC_DIR/_sysconfigdata"* >/dev/null; then
+  SYSCFG_SRC_DIR=""
+  if [[ "$COLLECT_ONLY" == 1 && -n "$SYSCFG_FROM" ]]; then
+    SYSCFG_SRC_DIR="$SYSCFG_FROM"
+  else
+    # 构建目录下 glob（CI 实证：树外构建生成于 build/lib.android-24-arm64_v8a-3.14/，非 lib/python3.14/）
+    for d in "$HOST_BUILD_DIR"/build/lib.python3.14 "$HOST_BUILD_DIR"/build/lib.android-*; do
+      if compgen -G "$d/_sysconfigdata"* >/dev/null 2>&1; then SYSCFG_SRC_DIR="$d"; break; fi
+    done
+  fi
+  if [[ -n "$SYSCFG_SRC_DIR" ]] && compgen -G "$SYSCFG_SRC_DIR/_sysconfigdata"* >/dev/null; then
     cp "$SYSCFG_SRC_DIR"/_sysconfigdata* "$STDROOT/"
     log "⑥ _sysconfigdata 拷入：$(ls "$SYSCFG_SRC_DIR"/_sysconfigdata*)"
   else
