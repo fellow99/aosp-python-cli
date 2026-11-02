@@ -173,10 +173,10 @@ gen_setup_local() {  # $1 = 输出路径；$2 = 规范化 skip
     echo "# D1 全静态：MODULE_BUILDTYPE=static + vendored 覆盖 + *disabled* 禁用段。"
     echo "*static*"
     if [[ "$skip" != *" _ssl "* && "$skip" != *" all "* ]]; then
-      echo "_ssl _ssl.c -I$OPENSSL_PREFIX/include -L$OPENSSL_PREFIX/lib -lssl -lcrypto"
+      echo "_ssl _ssl.c -I$OPENSSL_PREFIX/include -L$OPENSSL_PREFIX/lib -l:libssl.a -l:libcrypto.a"
     fi
     if [[ "$skip" != *" _hashlib "* && "$skip" != *" all "* ]]; then
-      echo "_hashlib _hashopenssl.c -I$OPENSSL_PREFIX/include -L$OPENSSL_PREFIX/lib -lcrypto"
+      echo "_hashlib _hashopenssl.c -I$OPENSSL_PREFIX/include -L$OPENSSL_PREFIX/lib -l:libcrypto.a"
     fi
     if [[ "$skip" != *" zlib "* && "$skip" != *" all "* ]]; then
       echo "zlib zlibmodule.c -lz"
