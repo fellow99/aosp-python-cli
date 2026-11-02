@@ -231,11 +231,12 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
         python3 Android/android.py configure-host "$HOST_TRIPLET" -- \
           --disable-shared --with-static-libpython --disable-test-modules \
           MODULE_BUILDTYPE=static \
+          "PKG_CONFIG_PATH=$OPENSSL_PREFIX/lib/pkgconfig" \
           "--with-openssl=$OPENSSL_PREFIX" ) || err "官方 android.py configure-host 失败" 2
     else
       log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK python3 Android/android.py configure-build"
       log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK python3 Android/android.py make-build"
-      log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK ANDROID_API_LEVEL=$API LDFLAGS=$LDFLAGS_PY python3 Android/android.py configure-host $HOST_TRIPLET -- --disable-shared --with-static-libpython --disable-test-modules MODULE_BUILDTYPE=static --with-openssl=$OPENSSL_PREFIX"
+      log "  (dry-run) cd $SRC && ANDROID_HOME=$ANDROID_SDK ANDROID_API_LEVEL=$API LDFLAGS=$LDFLAGS_PY python3 Android/android.py configure-host $HOST_TRIPLET -- --disable-shared --with-static-libpython --disable-test-modules MODULE_BUILDTYPE=static PKG_CONFIG_PATH=$OPENSSL_PREFIX/lib/pkgconfig --with-openssl=$OPENSSL_PREFIX"
     fi
     HOST_BUILD_DIR="$SRC/cross-build/$HOST_TRIPLET"
   else
@@ -243,6 +244,7 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
       LDFLAGS='$LDFLAGS_PY' $SRC/configure --host=$TARGET --with-build-python=$HOST_PY \
       --disable-shared --with-static-libpython --with-openssl=$OPENSSL_PREFIX \
       --disable-test-modules MODULE_BUILDTYPE=static \
+      PKG_CONFIG_PATH='$OPENSSL_PREFIX/lib/pkgconfig' \
       ac_cv_file__dev_ptmx=yes ac_cv_file__dev_ptc=no"
     if [[ "$DRY_RUN" == 1 ]]; then
       log "  (dry-run) mkdir -p $OUT/build && cd $OUT/build && $CONF_CMD"
