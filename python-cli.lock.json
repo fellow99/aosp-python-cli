@@ -10,14 +10,14 @@
       "abi": "arm64-v8a",
       "androidApi": 24,
       "name": "libpython_cli.so",
-      "size": 0,
-      "sha256": "",
+      "size": 15754472,
+      "sha256": "1112574a9dceca5c2cf7878a08ebc1fc5eca4914e892c73a10b49d87f6ebb0d6",
       "builtFrom": {
         "source": "Python-<ver>.tgz (python.org), unmodified; PEP 738 Android cross-compile (configure --host=aarch64-linux-android)",
         "extensionModules": "STATIC (Modules/Setup.local *static*): avoids dlopen-from-filesDir which SELinux forbids for targetSdk>=29; ssl via statically linked OpenSSL",
         "stdlib": "Lib/ pure-python stdlib + ensurepip wheels + CA bundle shipped as AAR assets (provisioned to filesDir at first run by the consumer)",
-        "ndk": "TBD (first CI build pins NDK line + version)",
-        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded",
+        "ndk": "27.3.13750724 (pinned by first CI build 2026-11-02T14:33:30Z)",
+        "flags": "-Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded",
         "deps": {
           "cpython": {
             "version": "3.14.10",
@@ -53,13 +53,14 @@
         "neededWhitelist": true,
         "sha256Match": true,
         "sizeMatch": true,
-        "pageAlign16k": true
+        "pageAlign16k": true,
+        "$note": "keys mean \"gate enabled\"; values reflect provision --check pass at release time"
       },
       "mavenCentral": {
         "coordinates": "io.github.fellow99:python-cli:3.14.10",
         "published": false
       },
-      "status": "draft"
+      "status": "released"
     }
   ],
   "matrix": {

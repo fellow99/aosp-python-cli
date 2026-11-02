@@ -346,11 +346,12 @@ public class MainActivity extends Activity {
         l.add(new Probe("TC-101-05", "pip list / show", arr(pipSh, "list"), null, null, 60_000,
                 o -> o.exit == 0 && o.stdout.contains("packaging") && o.stdout.contains("pip") ? null
                         : head(o.stdout + o.stderr)));
-        l.add(new Probe("TC-101-06", "sdist 边界拒绝（--no-binary 强制 sdist 路径）",
-                arr(pipSh, "install", "--no-binary=:all:", "packaging"), null, null, 300_000,
-                o -> o.exit != 0 ? null : "意外成功（sdist 不应可装）" + head(o.stdout)));
-        l.add(new Probe("TC-101-06b", "sdist 拒绝后无残留", py("-c",
-                        "import importlib.util;print('RESIDUAL' if importlib.util.find_spec('packaging') else 'CLEAN')"),
+        l.add(new Probe("TC-101-06", "C 扩展 sdist 边界拒绝（numpy --no-binary）",
+                arr(pipSh, "install", "--no-cache-dir", "--no-binary=:all:", "numpy"),
+                null, null, 300_000,
+                o -> o.exit != 0 ? null : "意外成功（C 扩展 sdist 不应可装——无编译器）" + head(o.stdout)));
+        l.add(new Probe("TC-101-06b", "C 扩展 sdist 拒绝后无残留", py("-c",
+                        "import importlib.util;print('RESIDUAL' if importlib.util.find_spec('numpy') else 'CLEAN')"),
                 null, null, 30_000,
                 o -> o.exit == 0 && o.stdout.contains("CLEAN") ? null : head(o.stdout)));
         l.add(new Probe("TC-101-07", "C 扩展包边界（numpy wheel 场景，事实记录）",
@@ -370,8 +371,8 @@ public class MainActivity extends Activity {
                 o -> o.failReason != null || o.exit != 0
                         ? "PASS-EXPECTED-UNEXECUTABLE(" + (o.failReason != null ? o.failReason : "exit=" + o.exit) + ")"
                         : "意外可 exec"));
-        l.add(new Probe("TC-101-12", "无网络失败可读（代理黑洞）",
-                arr(pipSh, "install", "packaging"),
+        l.add(new Probe("TC-101-12", "无网络失败可读（代理黑洞+no-cache）",
+                arr(pipSh, "install", "--no-cache-dir", "packaging"),
                 envKv("https_proxy", "http://127.0.0.1:1", "http_proxy", "http://127.0.0.1:1"),
                 null, 120_000,
                 o -> o.exit != 0 && (o.stderr.toLowerCase().contains("proxy")

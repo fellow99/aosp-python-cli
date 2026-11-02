@@ -1,0 +1,347 @@
+{
+  "runAt": "2026-11-02T15:54:40+0000",
+  "device": "sdk_gphone64_x86_64 17 abi=x86_64",
+  "nativeDir": "\/data\/app\/~~gRdz_MgmWbyT7BDE9eb68A==\/org.fellow99.pythonprobe-fTYzLKJi08JfPPn5uF5M7g==\/lib\/arm64",
+  "probes": [
+    {
+      "id": "TC-003-01",
+      "title": "版本串回程",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 206,
+      "stdout": "Python 3.14.10\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-02",
+      "title": "-c 执行回程",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 2128,
+      "stdout": "(3, 14, 10)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-03a",
+      "title": "退出码传递 exit 7",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 7,
+      "ms": 1331,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-03b",
+      "title": "未捕获异常 exit 1",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 1,
+      "ms": 3760,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\\n  File \"<string>\", line 1, in <module>\\n    raise RuntimeError('x')\\nRuntimeError: x\\n"
+    },
+    {
+      "id": "TC-003-04",
+      "title": "stderr 分流",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1183,
+      "stdout": "o\\n",
+      "stderr": "e\\n"
+    },
+    {
+      "id": "TC-003-05",
+      "title": "UTF-8 输出",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1116,
+      "stdout": "你好世界🦆\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-06",
+      "title": "sqlite3 闭环",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1727,
+      "stdout": "42\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-07",
+      "title": "zlib 闭环",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1126,
+      "stdout": "True\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-08",
+      "title": "hashlib sha256",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1528,
+      "stdout": "c792a98c51d0936e\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-10",
+      "title": "stdlib 导入抽查（ctypes 预期缺席）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1931,
+      "stdout": "OK 13\\nMISSING []\\nCTYPES=absent\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-11",
+      "title": "-m json.tool（stdin 喂入）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 2840,
+      "stdout": "{\\n    \"a\": 1\\n}\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-12",
+      "title": "脚本文件执行",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1120,
+      "stdout": "FILE= \/data\/data\/org.fellow99.pythonprobe\/files\/t.py\\nNAME= t.py\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-13",
+      "title": "REPL 交互",
+      "verdict": "BLOCKED",
+      "detail": "BLOCKED:PTTY 语义需终端 App（node-pty），本探针载体为非交互子集",
+      "exit": 0,
+      "ms": 3553,
+      "stdout": "",
+      "stderr": "Python 3.14.10 (main, Nov  2 2026, 14:33:29) [Clang 18.0.4 (https:\/\/android.googlesource.com\/toolchain\/llvm-project d8003a456 on android\\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\\n>>> \\n"
+    },
+    {
+      "id": "TC-003-09",
+      "title": "TLS\/CA 生效 HTTPS GET",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 4159,
+      "stdout": "200\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-09b",
+      "title": "CA 校验失败路径可预期",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 1,
+      "ms": 4918,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\\n  File \"\/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/urllib\/request.py\", line 1333, in do_open\\n    h.request(req.get_method(), req.selector, req.data, headers,\\n    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n              encode_chunked=req.has_header('Transfer-encoding'))\\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \"\/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/http\/client.py\", line 1386, in request\\n    self._send_request(method, url, body, headers, encode_chunked)\\n    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \"\/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/http\/client.py\", l…"
+    },
+    {
+      "id": "TC-003-14",
+      "title": "平台事实记录",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1448,
+      "stdout": "platform= android\\ncpu= 6\\npath0= \\nimpl= CPython\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-003-15",
+      "title": "PYTHONHOME 缺失错误注入",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 1,
+      "ms": 711,
+      "stdout": "",
+      "stderr": "Could not find platform independent libraries <prefix>\\nCould not find platform dependent libraries <exec_prefix>\\nPython path configuration:\\n  PYTHONHOME = (not set)\\n  PYTHONPATH = (not set)\\n  program name = '\/data\/app\/~~gRdz_MgmWbyT7BDE9eb68A==\/org.fellow99.pythonprobe-fTYzLKJi08JfPPn5uF5M7g==\/lib\/arm64\/libpython_cli.so'\\n  isolated = 0\\n  environment = 1\\n  user site = 1\\n  safe_path = 0\\n  import site = 1\\n  is in build tree = 0\\n  stdlib dir = '\/usr\/local\/lib\/python3.14'\\n  sys.path[0] = (not set)\\n  sys._base_executable = '\/data\/app\/~~gRdz_MgmWbyT7BDE9eb68A==\/org.fellow99.pythonprobe-fTYzLKJi08JfPPn5uF5M7g==\/lib\/arm64\/libpython_cli.so'\\n  sys.base_prefix = '\/usr\/local'\\n  sys.base_exec_prefix = '\/usr\/local'\\n  sys.platlibdir = 'lib'\\n  sys.executable = '\/data\/app\/~~gRdz_MgmWbyT7BD…"
+    },
+    {
+      "id": "TC-101-01",
+      "title": "pip --version 直出（libpip.so 壳）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 7070,
+      "stdout": "pip 26.2.2 from \/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/site-packages\/pip (python 3.14)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-02",
+      "title": "pip3 别名（libpip3.so）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 3050,
+      "stdout": "pip 26.2.2 from \/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/site-packages\/pip (python 3.14)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-03",
+      "title": "离线首启（代理指向黑洞仍成功=不触网）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 2943,
+      "stdout": "pip 26.2.2 from \/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/site-packages\/pip (python 3.14)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-13",
+      "title": "参数透传 --help",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 3049,
+      "stdout": "\\nUsage:   \\n  \/data\/app\/~~gRdz_MgmWbyT7BDE9eb68A==\/org.fellow99.pythonprobe-fTYzLKJi08JfPPn5\\nuF5M7g==\/lib\/arm64\/libpython_cli.so -m pip <command> [options]\\n\\nCommands:\\n  install                     Install packages.\\n  lock                        Generate a lock file.\\n  download                    Download packages.\\n  uninstall                   Uninstall packages.\\n  freeze                      Output installed packages in requirements format.\\n  inspect                     Inspect the python environment.\\n  list                        List installed packages.\\n  show                        Show information about installed packages.\\n  check                       Verify installed packages have compatible \\ndependencies.\\n  config                      Manage local and global configur…",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-04",
+      "title": "纯 py 包安装 packaging",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 136416,
+      "stdout": "Collecting packaging\\n  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)\\nDownloading packaging-26.3-py3-none-any.whl (129 kB)\\nInstalling collected packages: packaging\\nSuccessfully installed packaging-26.3\\n",
+      "stderr": "WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectTimeoutError(<HTTPSConnection(host='pypi.org', port=443) at 0x71f12ec52ad0>, 'Connection to pypi.org timed out. (connect timeout=15)')': \/simple\/packaging\/\\n"
+    },
+    {
+      "id": "TC-101-04b",
+      "title": "import packaging",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1121,
+      "stdout": "26.3\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-05",
+      "title": "pip list \/ show",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 3373,
+      "stdout": "Package   Version\\n--------- -------\\npackaging 26.3\\npip       26.2.2\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-06",
+      "title": "C 扩展 sdist 边界拒绝（numpy --no-binary）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": -1,
+      "ms": 300004,
+      "stdout": "Collecting numpy\\n  Downloading numpy-2.5.4.tar.gz (20.9 MB)\\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.9\/20.9 MB 6.1 MB\/s  0:00:03\\n  Installing build dependencies: started\\n  Installing build dependencies: still running...\\n  Installing build dependencies: still running...\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-06b",
+      "title": "C 扩展 sdist 拒绝后无残留",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 1240,
+      "stdout": "CLEAN\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-07",
+      "title": "C 扩展包边界（numpy wheel 场景，事实记录）",
+      "verdict": "PASS",
+      "detail": "PASS-REJECTED|Collecting numpy\\n  Downloading numpy-2.5.4.tar.gz (20.9 MB)\\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.9\/20.9 MB 8.4 MB\/s  0:00:02\\n  Installing build dependencies: started\\n  Installing build dependencies: finished with status 'done'\\n  Getting requirements to build wheel: started\\n  Gettin…",
+      "exit": 1,
+      "ms": 225897,
+      "stdout": "Collecting numpy\\n  Downloading numpy-2.5.4.tar.gz (20.9 MB)\\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.9\/20.9 MB 8.4 MB\/s  0:00:02\\n  Installing build dependencies: started\\n  Installing build dependencies: finished with status 'done'\\n  Getting requirements to build wheel: started\\n  Getting requirements to build wheel: finished with status 'done'\\n  Installing backend dependencies: started\\n  Installing backend dependencies: still running...\\n  Installing backend dependencies: still running...\\n  Installing backend dependencies: finished with status 'error'\\n",
+      "stderr": "  error: subprocess-exited-with-error\\n  \\n  × installing backend dependencies for numpy did not run successfully.\\n  │ exit code: 1\\n  ╰─> [94 lines of output]\\n      Collecting ninja>=1.8.2\\n        Downloading ninja-1.13.2.tar.gz (243 kB)\\n        Installing build dependencies: started\\n        Installing build dependencies: finished with status 'done'\\n        Getting requirements to build wheel: started\\n        Getting requirements to build wheel: finished with status 'done'\\n        Installing backend dependencies: started\\n        Installing backend dependencies: still running...\\n        Installing backend dependencies: finished with status 'error'\\n        error: subprocess-exited-with-error\\n      \\n        × installing backend dependencies for ninja did not run successfully.\\n …"
+    },
+    {
+      "id": "TC-101-08",
+      "title": "卸载 packaging",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 4258,
+      "stdout": "Found existing installation: packaging 26.3\\nUninstalling packaging-26.3:\\n  Successfully uninstalled packaging-26.3\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-08b",
+      "title": "卸载后 import 失败",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 1,
+      "ms": 1928,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\\n  File \"<string>\", line 1, in <module>\\n    import packaging\\nModuleNotFoundError: No module named 'packaging'\\n"
+    },
+    {
+      "id": "TC-101-09",
+      "title": "ensurepip 兜底",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 16415,
+      "stdout": "Looking in links: \/data\/user\/0\/org.fellow99.pythonprobe\/files\/tmp\/tmpywulubbu\\nRequirement already satisfied: pip in \/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/site-packages (26.2.2)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-11",
+      "title": "CLI 入口脚本事实（exec filesDir 脚本）",
+      "verdict": "PASS",
+      "detail": "PASS-EXPECTED-UNEXECUTABLE(IOException: Cannot run program \"\/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/bin-noexec-probe\" (in directory \"\/data\/user\/0\/org.fellow99.pythonprobe\/files\"): error=13, Permission denied)",
+      "exit": -1,
+      "ms": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-12",
+      "title": "无网络失败可读（代理黑洞+no-cache）",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 1,
+      "ms": 11908,
+      "stdout": "",
+      "stderr": "WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [Errno 111] Connection refused\")': \/simple\/packaging\/\\nWARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [Errno 111] Connection refused\")': \/simple\/packaging\/\\nWARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [Errno 111] Connection refused\")': \/sim…"
+    },
+    {
+      "id": "TC-101-14",
+      "title": "pip 自升级",
+      "verdict": "PASS",
+      "detail": "",
+      "exit": 0,
+      "ms": 16701,
+      "stdout": "Requirement already satisfied: pip in \/data\/user\/0\/org.fellow99.pythonprobe\/files\/python-bridge-tools\/lib\/python3.14\/site-packages (26.2.2)\\n",
+      "stderr": ""
+    },
+    {
+      "id": "TC-101-10",
+      "title": "uv pip 组合",
+      "verdict": "BLOCKED",
+      "detail": "BLOCKED:aosp-uv-cli 未就绪（P5 外部依赖）",
+      "exit": -1,
+      "ms": 4,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}
