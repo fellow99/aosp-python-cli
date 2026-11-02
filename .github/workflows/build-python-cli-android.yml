@@ -22,11 +22,12 @@ permissions:
 
 env:
   # 装机钉版矩阵（FR-002-002；⬜ 首跑实测后如需调整只改这一块）
+  # 注意：目标 python 版本与 Android API 不在此钉——版本来自 tag/dispatch 输入并与 lock 断言，
+  # API 一律取自 lock releases[].androidApi（评审 #11，单一事实源）。
   GRADLE_VERSION: '9.4.1'
   NODE_VERSION: '20'
   JAVA_VERSION: '21'
   NDK_VERSION: '28.2.13676358' # r28c 线 ⬜ 首跑核对
-  ANDROID_API: '24'
 
 jobs:
   gate:
@@ -95,15 +96,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: resolve 版本（tag 去 v 前缀；与 lock active 断言）
+      - name: resolve 版本（tag 去 v 前缀；与 lock active 断言；API 取 lock，评审 #11）
         run: |
           PYVER="${PYVER#v}"
           echo "PYVER=$PYVER" >> "$GITHUB_ENV"
-          ACTIVE=$(node -e "console.log(require('./python-cli.lock.json').active.version)")
+          ACTIVE=$(node -p "require('./python-cli.lock.json').active.version")
+          AND_API=$(node -p "(r=>r?r.androidApi:'')(require('./python-cli.lock.json').releases.find(x=>x.version===require('./python-cli.lock.json').active.version&&x.abi===require('./python-cli.lock.json').active.abi))")
           if [ "$PYVER" != "$ACTIVE" ]; then
             echo "::error::tag/dispatch 版本 $PYVER ≠ lock active $ACTIVE（先在 lock 登记 releases 条目）"; exit 1
           fi
-          echo "目标：$PYVER"
+          if [ -z "$AND_API" ]; then
+            echo "::error::lock 无 active 对应 release 的 androidApi"; exit 1
+          fi
+          echo "ANDROID_API=$AND_API" >> "$GITHUB_ENV"
+          echo "目标：$PYVER（api=$AND_API，取自 lock）"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -134,13 +140,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .dist/src
+          # 评审 #3：不用 restore-keys——lock 变更后前缀回填旧 .dist/src 会触发 fetch 的
+          # 缓存污染防线（exit 1），流水线死锁到手工清缓存；精确键未命中 = 重新下载（正确语义）。
           key: fetch-${{ env.PYVER }}-${{ hashFiles('python-cli.lock.json') }}
-          restore-keys: fetch-${{ env.PYVER }}-
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ccache-${{ env.NDK_VERSION }}-${{ env.PYVER }}
+      # ccache 层暂缓（评审 #9）：build 脚本以绝对路径调 clang，PATH shim 不会命中；
+      # 待首轮 CI 实测耗时后决定接入方式（002 plan §5 原定口径），不在本批挂空转步骤。
 
       - name: fetch 五源（钉选 + sha256 校验 + 解压）
         run: node scripts/fetch-python-cli-source.mjs --python "$PYVER" --out .dist/src
@@ -181,7 +185,7 @@ jobs:
           cp .dist/out/BUILD-METADATA.txt .dist/out/FETCH-METADATA.json ".dist/pkg/$PKG/"
           cp LICENSE ".dist/pkg/$PKG/LICENSE"
           cp python-cli/THIRD-PARTY-NOTICES.md ".dist/pkg/$PKG/"
-          cp python-cli/build/outputs/aar/python-cli-release.aar ".dist/pkg/$PKG/" || true
+          cp python-cli/build/outputs/aar/python-cli-release.aar ".dist/pkg/$PKG/"
           tar -czf ".dist/pkg/$PKG.tar.gz" -C .dist/pkg "$PKG"
           ( cd .dist/pkg && sha256sum "$PKG.tar.gz" > "$PKG.tar.gz.sha256" )
 

@@ -66,11 +66,15 @@ function say(msg) {
 
 // ── assets 树：清单与静态性检查（001-building FR-001-030…032）───────────────
 
-/** 递归收集目录内全部文件（相对路径，正斜杠）。 */
+/** 递归收集目录内全部文件（相对路径，正斜杠）。symlink ⇒ 报错（评审 #10：
+ *  symlink 既不进 manifest 也躲过静态性检查，fail-closed 拒绝）。 */
 function walkFiles(dir, base = dir) {
   const out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
+    if (ent.isSymbolicLink()) {
+      throw new Error(`数据树内不允许 symlink：${path.relative(base, p)}`);
+    }
     if (ent.isDirectory()) out.push(...walkFiles(p, base));
     else if (ent.isFile()) out.push(path.relative(base, p).split(path.sep).join('/'));
   }
@@ -114,8 +118,13 @@ function manifestFor(dir) {
   };
 }
 
-function verifyAssets(targetDir, manifest) {
+function verifyAssets(targetDir, manifest, rel) {
   const problems = [];
+  // manifest 与 lock 的版本/ABI 交叉核对（评审 #10：防「别的 python 版本投放的树」验过）
+  if (rel) {
+    if (manifest.version !== rel.version) problems.push(`版本不匹配：manifest=${manifest.version} lock=${rel.version}`);
+    if (manifest.abi !== rel.abi) problems.push(`ABI 不匹配：manifest=${manifest.abi} lock=${rel.abi}`);
+  }
   const actual = manifestFor(targetDir).files;
   const expect = manifest.files;
   for (const f of Object.keys(expect)) {
@@ -336,7 +345,7 @@ function main() {
     }
     const mPath = path.join(target, ASSETS_MANIFEST);
     if (!fs.existsSync(mPath)) throw new Error(`缺 ${ASSETS_MANIFEST}（投放树不完整）`);
-    const problems = verifyAssets(target, JSON.parse(fs.readFileSync(mPath, 'utf8')));
+    const problems = verifyAssets(target, JSON.parse(fs.readFileSync(mPath, 'utf8')), rel);
     for (const p of problems) say(`✘ ${p}`);
     if (problems.length) {
       say('assets 复验：不合格');
@@ -374,7 +383,7 @@ function main() {
       say(`✘ assets 缺 ${ASSETS_MANIFEST}（投放树不完整）`);
       assetsOk = false;
     } else {
-      const problems = verifyAssets(assetsTarget, JSON.parse(fs.readFileSync(path.join(assetsTarget, ASSETS_MANIFEST), 'utf8')));
+      const problems = verifyAssets(assetsTarget, JSON.parse(fs.readFileSync(path.join(assetsTarget, ASSETS_MANIFEST), 'utf8')), rel);
       for (const p of problems) say(`✘ assets ${p}`);
       say(problems.length === 0 ? `✔ assets 复验：与 manifest 一致` : `✘ assets 复验：${problems.length} 处不一致`);
       assetsOk = problems.length === 0;
