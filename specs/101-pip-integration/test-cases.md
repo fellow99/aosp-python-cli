@@ -10,8 +10,8 @@
 
 | # | 用例 | 环境 | 前置 | 步骤 | 期望（可证伪） | 探针 | FR | 状态 |
 |---|---|---|---|---|---|---|---|---|
-| TC-101-01 | pip --version 直出 | device | 产物物化 + env 注入 | `PTY$ pip --version` | stdout = `pip <pipver> (python <pyver>)` 形态；exit 0 | P4 | FR-101-001 | ⬜ |
-| TC-101-02 | pip3 别名 | device | 同上 | `PTY$ pip3 --version` | 与 TC-101-01 输出一致 | P4 | FR-101-001 | ⬜ |
+| TC-101-01 | pip --version 直出 | device | 产物物化 + env 注入 | `PTY$ pip --version` | stdout = `pip <pipver> (python <pyver>)` 形态；exit 0 | P4 | FR-101-001 | ✅（2026-11-02） |
+| TC-101-02 | pip3 别名 | device | 同上 | `PTY$ pip3 --version` | 与 TC-101-01 输出一致 | P4 | FR-101-001 | ✅（2026-11-02） |
 | TC-101-03 | 离线首启 | device | 飞行模式/无网络 | `PTY$ pip --version` | 成功（不触网）；`pip list` 成功列出 pip | — | FR-101-002 | ⬜ |
 | TC-101-04 | 纯 py 包安装 | device | 网络可用（P3 已过） | `PTY$ pip install packaging` → `python -c 'import packaging;print(packaging.__version__)'` | 安装成功 + import 有输出；`pip list` 出现 packaging | P4 | FR-101-005 | ⬜ |
 | TC-101-05 | list/show | device | TC-101-04 后 | `pip list`；`pip show packaging` | list 含 pip 与 packaging；show 输出 Version/Location 字段 | — | FR-101-006 | ⬜ |
@@ -29,10 +29,10 @@
 
 | # | 用例 | 环境 | 前置 | 步骤 | 期望 | FR | 状态 |
 |---|---|---|---|---|---|---|---|
-| TC-101-15 | pip 树构成 | host | 001 build 步⑦产物（或本地替身构建） | 检查 `stdlib-assets/Lib/site-packages/pip/` | `pip/__init__.py` 存在；**无 `bin/` 入口**；`pip/__version__.py` 的 `__version__` = lock `<pipver>` | FR-101-003 | ⬜ |
-| TC-101-16 | 壳脚本内容与语法 | host | 同上 | 查看 `libpip.so`/`libpip3.so` 内容；`sh -n` 语法检查 | 内容 = 001 §3.3 模板（`#!/system/bin/sh` + `exec … -m pip "$@"`）；语法过 | FR-101-001/004 | ⬜ |
-| TC-101-17 | manifest 登记 pip 树 | host | provision `--assets` 投放后 | 检查 manifest.json | `files` 含 `Lib/site-packages/pip/…` 条目；ensurepip 条目齐备 | FR-101-003/010 | ⬜ |
-| TC-101-18 | 白名单放行 | host | jniLibs 投放后 `--check` | 含 libpip*.so 的目录检查 | `--check` exit 0（白名单生效）；换成真二进制内容的伪 libpip.so ⇒ exit 2 | FR-101-001 | ⬜ |
+| TC-101-15 | pip 树构成 | host | 001 build 步⑦产物（或本地替身构建） | 检查 `stdlib-assets/Lib/site-packages/pip/` | `pip/__init__.py` 存在；**无 `bin/` 入口**；`pip-<ver>.dist-info/METADATA` 的 `Version:` = lock `<pipver>`（pip 26.x 树无 `__version__.py`，以 dist-info 为准——2026-11-02 实测修正） | FR-101-003 | ✅（2026-11-02） |
+| TC-101-16 | 壳脚本内容与语法 | host | 同上 | 查看 `libpip.so`/`libpip3.so` 内容；`sh -n` 语法检查 | 内容 = 001 §3.3 模板（`#!/system/bin/sh` + `exec … -m pip "$@"`）；语法过 | FR-101-001/004 | ✅（2026-11-02） |
+| TC-101-17 | manifest 登记 pip 树 | host | provision `--assets` 投放后 | 检查 manifest.json | `files` 含 `Lib/site-packages/pip/…` 条目；ensurepip 条目齐备 | FR-101-003/010 | ✅（2026-11-02） |
+| TC-101-18 | 白名单放行 | host | jniLibs 投放后 `--check` | 含 libpip*.so 的目录检查 | `--check` exit 0（白名单生效）；换成真二进制内容的伪 libpip.so ⇒ exit 2 | FR-101-001 | ✅（2026-11-02） |
 
 ## 三、事实记录区（回填处，C6）
 

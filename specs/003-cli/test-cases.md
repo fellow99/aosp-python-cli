@@ -30,8 +30,8 @@
 
 | # | 用例 | 环境 | 前置 | 步骤 | 期望 | FR | 状态 |
 |---|---|---|---|---|---|---|---|
-| TC-003-16 | exec 门禁全过（合成 fixture） | host | 合成 AArch64 PIE fixture + draft lock | `node tools/provision.mjs --inspect <fixture>` | 七项 ✔（sha/size 为「记录」语义，draft 不比对）；exit 0 | FR-003-001 | ⬜ |
-| TC-003-17 | AAR 打包面 | host | TC-003-16 后 `--out` 投放 + `--assets` 投放 | `gradle :python-cli:assembleDebug` → 解包 AAR | `jni/arm64-v8a/libpython_cli.so` + `assets/python-bridge-tools/`（含 manifest.json）齐备；properties 字段与 lock 一致 | FR-003-001/002 | ⬜ |
+| TC-003-16 | exec 门禁全过（合成 fixture） | host | 合成 AArch64 PIE fixture + draft lock | `node tools/provision.mjs --inspect <fixture>` | 七项 ✔（sha/size 为「记录」语义，draft 不比对）；exit 0 | FR-003-001 | ✅（2026-11-02） |
+| TC-003-17 | AAR 打包面 | host | TC-003-16 后 `--out` 投放 + `--assets` 投放 | `gradle :python-cli:assembleDebug` → 解包 AAR | `jni/arm64-v8a/libpython_cli.so` + `assets/python-bridge-tools/`（含 manifest.json）齐备；properties 字段与 lock 一致 | FR-003-001/002 | ✅（2026-11-02） |
 
 ## 三、事实记录区（P6 回填处，C6）
 
