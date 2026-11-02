@@ -188,7 +188,10 @@ for (const key of keys) {
   const { url, sha256 } = deps[key];
   const file = path.join(downloads, path.basename(new URL(url).pathname));
   let actual;
-  if (fs.existsSync(file) && !force) {
+  // 钉选引导（评审 #4）：report 模式必须强制重新下载——否则「已有缓存文件」的哈希会被
+  // 当作官方钉选值（cacert.pem 等无版本文件名场景 = 陈旧/外来内容冒充钉选，违反 C2/C6）。
+  const useCache = fs.existsSync(file) && !force && !reportMode;
+  if (useCache) {
     actual = sha256File(file);
     if (sha256 && actual !== sha256) {
       die(`缓存污染：${file} 哈希与 lock 不一致（${actual.slice(0, 16)}… vs ${sha256.slice(0, 16)}…）。` +
@@ -196,7 +199,9 @@ for (const key of keys) {
     }
     say(`已缓存（哈希一致，跳过下载）：${path.basename(file)}`);
   } else {
-    say(`下载：${url}`);
+    say(reportMode && fs.existsSync(file)
+      ? `重新下载（引导模式不信任缓存）：${url}`
+      : `下载：${url}`);
     try {
       await download(url, file);
     } catch (e) {
