@@ -1,12 +1,12 @@
 {
   "$comment": "python-cli single source of truth: version = upstream CPython version (independent semver). Binaries are NOT committed; CI builds libpython_cli.so and tools/provision.mjs deploys it. The current entry is a DRAFT placeholder: size/sha256 are pinned by the first real CI build. See docs/000-工程规划.md.",
   "active": {
-    "version": "3.14.0",
+    "version": "3.14.10",
     "abi": "arm64-v8a"
   },
   "releases": [
     {
-      "version": "3.14.0",
+      "version": "3.14.10",
       "abi": "arm64-v8a",
       "androidApi": 24,
       "name": "libpython_cli.so",
@@ -17,7 +17,34 @@
         "extensionModules": "STATIC (Modules/Setup.local *static*): avoids dlopen-from-filesDir which SELinux forbids for targetSdk>=29; ssl via statically linked OpenSSL",
         "stdlib": "Lib/ pure-python stdlib + ensurepip wheels + CA bundle shipped as AAR assets (provisioned to filesDir at first run by the consumer)",
         "ndk": "TBD (first CI build pins NDK line + version)",
-        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded"
+        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded",
+        "deps": {
+          "cpython": {
+            "version": "3.14.10",
+            "url": "https://www.python.org/ftp/python/3.14.10/Python-3.14.10.tgz",
+            "sha256": "9e4996c19ae5a3df31f10c37723661f71d3455d73bd005f79df7098e5cc13192"
+          },
+          "openssl": {
+            "version": "4.1.0",
+            "url": "https://www.openssl.org/source/openssl-4.1.0.tar.gz",
+            "sha256": "50c17baf54cb008f6ce42d50deb4b28050a1aad711636cabd4b241c7e90cc2fd"
+          },
+          "sqlite": {
+            "version": "3.54.1",
+            "url": "https://sqlite.org/2026/sqlite-amalgamation-3540100.zip",
+            "sha256": "0a9c8e34352dad46006aa82836d5383bff9dc6bc9ce5a60553c05aa30e6ad1f9"
+          },
+          "pip": {
+            "version": "26.2.2",
+            "url": "https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl",
+            "sha256": "fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
+          },
+          "cacert": {
+            "version": "2026-10-20",
+            "url": "https://curl.se/ca/cacert.pem",
+            "sha256": "796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe"
+          }
+        }
       },
       "gates": {
         "eTypeEtDyn": true,
@@ -29,7 +56,7 @@
         "pageAlign16k": true
       },
       "mavenCentral": {
-        "coordinates": "io.github.fellow99:python-cli:3.14.0",
+        "coordinates": "io.github.fellow99:python-cli:3.14.10",
         "published": false
       },
       "status": "draft"

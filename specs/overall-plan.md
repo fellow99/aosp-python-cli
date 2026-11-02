@@ -25,8 +25,8 @@
 ```
 GROUP=io.github.fellow99（gradle.properties:2）
   + artifactId = python-cli（模块名，publish.gradle.kts:36）
-  + version    = CLI_VERSION = 3.14.0（draft；gradle.properties:8，lock active 同值）
-  ⇒ io.github.fellow99:python-cli:3.14.0（mavenCentral.coordinates 同值）
+  + version    = CLI_VERSION = 3.14.10（draft；gradle.properties:8，lock active 同值）
+  ⇒ io.github.fellow99:python-cli:3.14.10（mavenCentral.coordinates 同值）
 ```
 
 版本链双保险：`publish.gradle.kts:39` 显式 `coordinates(...)` + `python-cli/build.gradle.kts:19-26` 对每个 publication 反射 `setVersion`；任一处 `CLI_VERSION` 缺失即 error（`:16-17` / `publish.gradle.kts:38`）。
@@ -137,7 +137,7 @@ fetch → host python 校验 → configure/make → strip → stdlib/pip/CA 收�
 | # | 项 | 事实 | 影响 | 处置建议 |
 |---|---|---|---|---|
 | 1 | CI 退出码断言在 `bash -e` 下不可达 | workflow:34-40 先执行 `node tools/provision.mjs --check` 再 `code=$?`；GitHub Actions 默认 `bash --noprofile --norc -eo pipefail`，命令以 2 退出时 shell 在 `code=$?` 前终止 ⇒ 步骤直接失败 | 断言语义（区分 2 与其它非零）从未生效；症状恰好也是「红」，掩盖缺陷 | → **002-building-workflow FR-002-004 接办**（`|| code=$?` 模式，2026-11-02 立项，workflow 随本批 dev 重写） |
-| 2 | `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.0` 双版本字段并存 | 坐标版本唯一取 CLI_VERSION（两处覆写）；`VERSION_NAME` 仅 vanniktech `pomFromGradleProperties` 隐式消费 | 读者可能误取 0.1.0 为制品版本 | 删除 `VERSION_NAME` 或注释声明其仅 pom 元数据 |
+| 2 | `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.10` 双版本字段并存 | 坐标版本唯一取 CLI_VERSION（两处覆写）；`VERSION_NAME` 仅 vanniktech `pomFromGradleProperties` 隐式消费 | 读者可能误取 0.1.0 为制品版本 | 删除 `VERSION_NAME` 或注释声明其仅 pom 元数据 |
 | 3 | 仓内无 Gradle Wrapper | 仅 CI 钉 9.4.1；本地版本漂移无约束 | 新成员环境不可复现 | M1 前提交 wrapper 或 README 声明最低版本 |
 | 4 | CI 未显式 setup-node | provision/fetch 依赖 runner 预装 Node；规划 §9 装机清单要求 Node 20 | runner 镜像变更即断 | → **002-building-workflow T1.2 接办**（显式 `actions/setup-node`，随本批 dev） |
 | 5 | 规划 §5 的 `libpip*.so` 壳脚本 vs 现行 provision 白名单 | 现行 `--check` 会把 jniLibs 内任何第二个 `.so`（含壳脚本）判不合格；规划 §6 已把「壳脚本白名单扩展」列为 M1-T6 | M1 落地时必须同步扩白名单，否则壳脚本过不了自检 | → **001-building FR-001-033 接办**（随本批 dev 实现白名单扩展 + 壳脚本内容校验） |

@@ -2,7 +2,7 @@
 
 **项目名称：** `aosp-python-cli`（Maven 坐标 `io.github.fellow99:python-cli`）
 **需求：** 多模块：000-scaffold（已完成）· 001-building · 002-building-workflow · 003-cli · 101-pip-integration（后四者 2026-11-02 立项，见规划 §10.2） · 规范文档存放目录：`specs/`
-**工程版本：** `3.14.0`（draft；= CPython 上游计划版本，独立 semver，以 CI 实际钉选为准）
+**工程版本：** `3.14.10`（draft；= CPython 上游计划版本，独立 semver，以 CI 实际钉选为准）
 **技术栈：** Gradle 9.4.1 + AGP 9.2.1（AAR 容器，arm64-v8a，`useLegacyPackaging=true`）+ vanniktech 0.37.0 发布面 + 纯 Node exec 型 ELF 门禁（`tools/provision.mjs`）+ draft 事实源 `python-cli.lock.json`；M1 立项：PEP 738 交叉编译 + OpenSSL/sqlite vendored（代码本批实现，重编译验证 ⬜ CI）
 **文档生成时间：** 2026-11-02 · **最后更新：** 2026-11-02（新增四模块规格）
 **as-built 口径：** 只描述**已建成的事实**（M0 脚手架 ✅；M1 代码 ⬜ 本批实现中）；`docs/000-工程规划.md` 中 M1+ 的设计一律以「⬜规划 + § 号」引用，**不把规划当现实**。python 本体二进制**尚未构建**（M1，CI）。
@@ -126,7 +126,7 @@
 ```bash
 node tools/provision.mjs --check            # 未投放 ⇒ 预期退出码 2（draft 不比对 sha/size）
 node --check tools/provision.mjs && bash -n scripts/build-python-cli-android.sh
-node scripts/fetch-python-cli-source.mjs --python 3.14.0   # SCAFFOLD ⇒ 预期退出码 2
+node scripts/fetch-python-cli-source.mjs --python 3.14.10  # 五源钉选后 exit 0（sha256 未钉 ⇒ exit 1）
 gradle :python-cli:tasks --console=plain    # 配置门：无 .so 必须通过（Gradle 9.4.1 + JDK 21）
 git status --porcelain                      # jniLibs/assets 必须无条目（二进制不入库）
 ```

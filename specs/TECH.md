@@ -19,7 +19,7 @@
 | **交叉编译脚本** | POSIX bash（`scripts/build-python-cli-android.sh`） | ✅已实现（骨架：接口+纪律注释，退出码 2） | M1 的 PEP 738 configure/make/strip 门禁链入口 | 头注释固化六条纪律（PEP 738 / 静态扩展 / OpenSSL+CA / 16KB / exec ELF / lib*.so 命名） |
 | **ELF 门禁 profile** | **exec 型**（与 dlopen 库门禁三处相反）：`ET_DYN` + **PT_INTERP 恰 1 个且=`/system/bin/linker64`** + AArch64 + DT_NEEDED 白名单 + 16KB 对齐 + sha/size | ✅已实现 | 保证二进制能在 Android `nativeLibraryDir` 被 `execve` 启动 | exec 型必须物理落盘并被系统 linker 启动；`provision.mjs:146-160` 七项判据；退出码 0/2/1 |
 | **打包形态** | `packaging.jniLibs.useLegacyPackaging = true`（extractNativeLibs=true） | ✅已实现 | 把 `.so` 物理落盘 `nativeLibraryDir` | 不落盘则 `execve` ENOENT（`build.gradle.kts` 注释明文）；与 node-pty 的 dlopen 库口径**相反** |
-| **目标引擎** | CPython **3.14.0**（draft 计划版本，以 CI 实际钉选为准） | ⬜规划（M1 构建；本体二进制不存在） | `libpython_cli.so` 本体 + `Lib/` stdlib | PEP 738（CPython 3.13+ 官方 Android 支持）；版本=制品版本、独立 semver |
+| **目标引擎** | CPython **3.14.10**（draft 计划版本，以 CI 实际钉选为准） | ⬜规划（M1 构建；本体二进制不存在） | `libpython_cli.so` 本体 + `Lib/` stdlib | PEP 738（CPython 3.13+ 官方 Android 支持）；版本=制品版本、独立 semver |
 | **交叉编译路径** | PEP 738 官方路径：`configure --host=aarch64-linux-android` + `--with-build-python=<同版本 host python>` | ⬜规划（M1） | 官方支持的 Android 交叉编译 | 官方路径 ⇒ 不打源码补丁（fetch 不改源，C1）；源码树自带 Android 构建辅助优先包装（规划 §4.3） |
 | **NDK** | 与 aosp-node-runtime 对齐（r28c 或更高；PEP 738 要求 r26+）⬜ | ⬜规划（未钉版） | 交叉工具链 | lock `builtFrom.ndk` 现值 `"TBD (first CI build pins NDK line + version)"`——如实未钉 |
 | **OpenSSL** | vendored 源码钉版 + `./Configure android-arm64 no-shared`，静态链入 `_ssl`/`_hashlib` | ⬜规划（M1-T4） | TLS（Android 无系统证书目录，CA bundle 随包） | 版本计划写入 lock `builtFrom.deps`（规划 §4.1）；首版若失败则 `_ssl` 不编并如实上报（规划 R2） |
@@ -54,7 +54,7 @@
 | 维度 | 值 | 来源 |
 |---|---|---|
 | 制品坐标 | `io.github.fellow99:python-cli:<CLI_VERSION>` | `publish.gradle.kts:33-39` ✅ |
-| 当前版本（draft） | `3.14.0`（= CPython 上游计划版本；M1 以 CI 实际可构建最新稳定版钉选回写） | `gradle.properties:8` · `python-cli.lock.json` active ✅ |
+| 当前版本（draft） | `3.14.10`（= CPython 上游计划版本；M1 以 CI 实际可构建最新稳定版钉选回写） | `gradle.properties:8` · `python-cli.lock.json` active ✅ |
 | ABI | 仅 `arm64-v8a`（明确不做 x86/x86_64/arm32） | 模块 `abiFilters` · lock `matrix.abi` ✅ |
 | Android | `minSdk 24` · `compileSdk 36` · 目标 API（交叉编译 `--api` 默认 24） | `build.gradle.kts` · lock `releases[0].androidApi` · build 脚本 ✅ |
 | 依赖白名单 | `libc.so` `libm.so` `libdl.so` `libz.so` `liblog.so`（仅系统库；lock 登记可扩展） | lock `matrix.allowedNeeded` ✅ |
@@ -73,7 +73,7 @@
 | Gradle 9.4.1 | CI setup-gradle / 本地安装 | 构建 | 无 AAR | ✅（无 Wrapper ⚠️） |
 | AGP 9.2.1 + vanniktech 0.37.0 | google()/mavenCentral()/gradlePluginPortal | 构建/发布 | 解析失败 | ✅ |
 | Android SDK 36 / NDK（r28c+） | 本地 / CI 装机 | AGP 构建 / ⬜M1 交叉编译 | AAR 产出 / M1 阻塞 | NDK ⬜未钉 |
-| CPython 3.14.0 源码包 | python.org（sha256 校验） | ⬜M1 fetch | 无产物 | ⬜规划 |
+| CPython 3.14.10 源码包 | python.org（sha256 校验） | ⬜M1 fetch | 无产物 | ⬜规划 |
 | OpenSSL / sqlite / pip wheel / cacert | 官方源（各带 sha256） | ⬜M1 | `_ssl`/`_sqlite3`/`pip` 缺 | ⬜规划 |
 | Central Portal Token / GPG | 用户级 gradle.properties | 仅真实发布 | 发布任务被禁用（默认态） | ✅卫生就绪 |
 
@@ -86,6 +86,6 @@
 | 1 | 仓内无 Gradle Wrapper | Gradle 版本仅 CI 钉 9.4.1；本地开发者版本不受约束（AGP 9.2.1 对 Gradle 下限有要求） | M1 前补 `gradle wrapper --gradle-version 9.4.1` 或在 README 声明最低版本 |
 | 2 | CI 未显式 `setup-node` | provision/fetch 依赖 `ubuntu-24.04` runner 预装 Node；规划 §9 装机清单要求 Node 20 | M1 替换 workflow 时显式 `actions/setup-node` 钉版 |
 | 3 | CI「退出码=2 断言」在 `bash -e` 下不可达 | workflow 第 34-40 行：`node tools/provision.mjs --check` 以退出码 2 结束时，默认 `bash -eo pipefail` 会在 `code=$?` 之前终止该 step ⇒ 步骤按失败处理（症状恰好也是失败，但失败原因与断言文案不符） | 改写为 `node tools/provision.mjs --check; code=$?; if [ "$code" -ne 2 ]; then exit 1; fi` 并加 `set +e` 语义（如 `|| code=$?`）——详见 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §9 |
-| 4 | `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.0` 双版本字段并存 | 坐标版本唯一取 CLI_VERSION；VERSION_NAME 仅 vanniktech pom 属性消费 | 明确取舍：删除或在注释中声明其为 pom 元数据专用 |
+| 4 | `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.10` 双版本字段并存 | 坐标版本唯一取 CLI_VERSION；VERSION_NAME 仅 vanniktech pom 属性消费 | 明确取舍：删除或在注释中声明其为 pom 元数据专用 |
 | 5 | NDK / host python / OpenSSL / sqlite / pip 均未钉版 | lock `builtFrom.ndk`/`flags` 为 `TBD` 字面值（draft 如实不伪造） | M1-T2/T4/T5 首产回写 lock |
 | 6 | `gradle.properties.local.example` 含 `signing.secretKeyRingFile`，而 `publish.gradle.kts` 另支持 `signing.keyData`（内存 PGP） | 两条凭据通道并存，模板只列其一 | 发布 runbook 时统一口径 |

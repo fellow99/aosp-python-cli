@@ -83,14 +83,14 @@
 
 ```
 python-cli.lock.json（draft，唯一事实源 ✅）
-   active{version:3.14.0, abi:arm64-v8a}
+   active{version:3.14.10, abi:arm64-v8a}
    releases[0]{name, androidApi:24, size:0, sha256:"", builtFrom{…ndk:TBD…},
                gates{7 键}, mavenCentral{coordinates, published:false}, status:"draft"}
    matrix{minSdk:24, abi:[arm64-v8a], allowedNeeded[5], execPackaging, note}
         │ provision 读取（--version/--abi 可覆盖，缺记录即报错）
         ▼
    门禁判据 + 投放目标（python-cli/src/main/jniLibs/<abi>/<name>）+ properties 元数据
-        ▼ Gradle AAR ──▶ Maven Central 坐标 io.github.fellow99:python-cli:3.14.0
+        ▼ Gradle AAR ──▶ Maven Central 坐标 io.github.fellow99:python-cli:3.14.10
 ```
 
 - **draft 不伪造哈希**：`size:0`、`sha256:""`（C5/S5）✅；首个真实 CI 构建后回写并以实际钉住的 CPython 版本为准（规划 §2/§8）。

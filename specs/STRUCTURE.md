@@ -32,9 +32,9 @@ aosp-python-cli/                        # node-bridge-workspace 的 git submodul
 ├── tools/
 │   └── provision.mjs                     # ★ 投放 + exec 型 ELF 门禁（纯 Node，零第三方依赖；276 行）
 ├── publish.gradle.kts                    # 发布面共享配置（vanniktech 0.37.0 + Central Portal + RELEASE 门禁；139 行）
-├── python-cli.lock.json                  # ★ 唯一事实源（draft 3.14.0/arm64-v8a；size=0、sha256 空串，不伪造哈希；53 行）
+├── python-cli.lock.json                  # ★ 唯一事实源（draft 3.14.10/arm64-v8a；size=0、sha256 空串，不伪造哈希；53 行）
 ├── settings.gradle.kts                   # rootProject.name=aosp-python-cli，仅 include(":python-cli")（21 行）
-├── gradle.properties                     # 公共元数据（GROUP/POM_*/CLI_VERSION=3.14.0 draft）+ RELEASE=false（20 行）
+├── gradle.properties                     # 公共元数据（GROUP/POM_*/CLI_VERSION=3.14.10 draft）+ RELEASE=false（20 行）
 ├── gradle.properties.local.example       # 用户级凭据模板（Central Portal Token / GPG；真值文件不入库；8 行）
 ├── .gitignore                            # 构建产物 + 密钥 + jniLibs/**/*.so + assets 树 + .dist/（31 行）
 ├── LICENSE                               # MIT，Copyright (c) 2026 fellow99（21 行）
@@ -64,15 +64,15 @@ aosp-python-cli/                        # node-bridge-workspace 的 git submodul
 |---|---|---|---|
 | `settings.gradle.kts` | 工程 | pluginManagement 直载 `com.vanniktech.maven.publish.base` **0.37.0**；`FAIL_ON_PROJECT_REPOS`；rootName `aosp-python-cli`；仅 `:python-cli` | FR-000-001 |
 | `gradle/libs.versions.toml` | 工程 | `agp = "9.2.1"` 一项 + `android-library` 插件别名 | — |
-| `gradle.properties` | 工程 | `GROUP=io.github.fellow99` · `VERSION_NAME=0.1.0`（见 ⚠️）· `CLI_VERSION=3.14.0`（draft）· `POM_*` 全套 · **`RELEASE=false`** | FR-000-003；宪法 C5 |
+| `gradle.properties` | 工程 | `GROUP=io.github.fellow99` · `VERSION_NAME=0.1.0`（见 ⚠️）· `CLI_VERSION=3.14.10`（draft）· `POM_*` 全套 · **`RELEASE=false`** | FR-000-003；宪法 C5 |
 | `python-cli/build.gradle.kts` | 模块 | namespace `org.fellow99.pythoncli` · compileSdk 36 · minSdk 24 · `abiFilters += "arm64-v8a"` · **`useLegacyPackaging=true`** · 版本覆写为 `CLI_VERSION`（未设置即 error） | FR-000-002/004/003 |
 | `publish.gradle.kts` | 发布 | vanniktech `coordinates(io.github.fellow99, python-cli, CLI_VERSION)` · `pomFromGradleProperties` · Central Portal（validation=NONE，`-PAUTOMATIC_RELEASE=true` 才 PUBLISHED）· `signAllPublications` · release 单 variant + sources jar · POM `<scm><url>` 补丁 · **RELEASE=false 或缺 Token 时禁用 sign/publish 任务** | 宪法 C5；规划 §10.1 |
-| `python-cli.lock.json` | 事实源 | `active{3.14.0, arm64-v8a}` · `releases[0]` draft（`size:0`、`sha256:""`、gates 七键、`mavenCentral.published:false`）· `matrix{minSdk:24, abi:[arm64-v8a], allowedNeeded:[libc,libm,libdl,libz,liblog]}` | FR-000-010~013；字段模型见 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §数据模型 |
+| `python-cli.lock.json` | 事实源 | `active{3.14.10, arm64-v8a}` · `releases[0]` draft（`size:0`、`sha256:""`、gates 七键、`mavenCentral.published:false`）· `matrix{minSdk:24, abi:[arm64-v8a], allowedNeeded:[libc,libm,libdl,libz,liblog]}` | FR-000-010~013；字段模型见 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §数据模型 |
 | `tools/provision.mjs` | 工具 | lock 读取 → 七项 exec 门禁（ET_DYN/PT_INTERP=/system/bin/linker64/AArch64/白名单/sha/size/16KB）→ 幂等投放 jniLibs + 写 `META-INF/python-cli.properties` | FR-000-030~036 |
 | `.github/workflows/build-python-cli-android.yml` | CI | `ubuntu-24.04` + Temurin 21 + Gradle 9.4.1；`gradle :python-cli:tasks` 配置门禁 + provision 语法/退出码自检 + 脚本语法门禁；`permissions: contents: read` | FR-000-040~042 |
 | `.gitignore` | 仓库 | `build/`、`*.jks/*.keystore`、**`python-cli/src/main/jniLibs/**/*.so`**、**`python-cli/src/main/assets/**`**、`.dist/`、`build/out/` | 宪法 C3 |
 
-⚠️ **双版本字段并存**：`gradle.properties` 同时有 `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.0`。发布坐标版本唯一取 `CLI_VERSION`（`publish.gradle.kts:37-39` 显式 `coordinates(...)` + 模块侧 publication 反射覆写）；`VERSION_NAME` 仅由 vanniktech `pomFromGradleProperties` 消费，仓内无其它引用——两个版本口径并存，见 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §9 不一致清单。
+⚠️ **双版本字段并存**：`gradle.properties` 同时有 `VERSION_NAME=0.1.0` 与 `CLI_VERSION=3.14.10`。发布坐标版本唯一取 `CLI_VERSION`（`publish.gradle.kts:37-39` 显式 `coordinates(...)` + 模块侧 publication 反射覆写）；`VERSION_NAME` 仅由 vanniktech `pomFromGradleProperties` 消费，仓内无其它引用——两个版本口径并存，见 [`000-scaffold/plan.md`](./000-scaffold/plan.md) §9 不一致清单。
 
 ---
 

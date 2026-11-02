@@ -41,7 +41,7 @@
 
 ```jsonc
 "deps": {
-  "cpython":   { "version": "3.14.0", "url": "https://www.python.org/ftp/python/3.14.0/Python-3.14.0.tgz", "sha256": "" },
+  "cpython":   { "version": "3.14.10", "url": "https://www.python.org/ftp/python/3.14.10/Python-3.14.10.tgz", "sha256": "" },
   "openssl":   { "version": "3.5.x",  "url": "https://www.openssl.org/source/openssl-<v>.tar.gz", "sha256": "" },
   "sqlite":    { "version": "3.50.x", "url": "https://sqlite.org/2025/sqlite-amalgamation-<v>.zip", "sha256": "" },
   "pip":       { "version": "25.x",   "url": "https://files.pythonhosted.org/.../pip-<v>-py3-none-any.whl", "sha256": "" },
@@ -63,7 +63,7 @@
 | 步 | 内容 | 关键纪律 |
 |---|---|---|
 | ① env | 解析 NDK toolchain 前缀与 `aarch64-linux-android<api>` clang | NDK 路径不存在 ⇒ exit 1 |
-| ② host python 校验 | `<host-python> --version` ≠ 目标版本 ⇒ exit 1（FR-001-010） | 版本串逐段比较（3.14.0 ≠ 3.14.0a1） |
+| ② host python 校验 | `<host-python> --version` ≠ 目标版本 ⇒ exit 1（FR-001-010） | 版本串逐段比较（3.14.10 ≠ 3.14.10a1） |
 | ③ configure | `CC=clang --host=aarch64-linux-android --with-build-python=<hp>` + `LDFLAGS=-Wl,-z,max-page-size=16384`；写 `Modules/Setup.local` `*static*` 段（_ssl/_hashlib/zlib/_sqlite3 + vendored 路径）；`--disable-` / 剔除 tkinter/curses/readline/dbm/_test* | 选项名以 3.14 树实际 configure 为准（R1 ⬜）；`--dry-run` 打印将执行的命令 |
 | ④ make | `make -j$(nproc)` → `python` 可执行（PIE） | 失败 ⇒ exit 2 |
 | ⑤ strip | `llvm-strip --strip-unneeded` → `$OUT/libpython_cli.so`（FR-001-014） | 输出名取自 lock `active.name` |

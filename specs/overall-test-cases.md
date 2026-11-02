@@ -28,7 +28,7 @@
 |---|---|---|---|
 | TC-01 | 干净工程可配置（无 `.so` 任务求值成功） | FR-000-005 · FR-000-040 | ✅ BUILD SUCCESSFUL |
 | TC-02 | AAR 容器可产出 | FR-000-002 | ✅ `python-cli-debug.aar` 产出（仍可复核：`python-cli/build/outputs/aar/`） |
-| TC-03 | 版本坐标解析 = `CLI_VERSION`（3.14.0 draft） | FR-000-003 | ✅ |
+| TC-03 | 版本坐标解析 = `CLI_VERSION`（执行时 3.14.0；现 3.14.10 draft） | FR-000-003 | ✅ |
 | TC-04 | provision 语法检查 | FR-000-042 · S1 | ✅ exit 0 |
 | TC-05 | provision 未投放语义（`--check` = 2，文案含「未投放」与「draft 无锁值」） | FR-000-031/032 · C4/C5 | ✅ exit 2 |
 | TC-06 | fetch 骨架语义（SCAFFOLD = 2） | S7 · S1 | ✅ exit 2 |
@@ -64,8 +64,8 @@
 ```bash
 node tools/provision.mjs --check                                   # 未投放 ⇒ 预期退出码 2
 node --check tools/provision.mjs && bash -n scripts/build-python-cli-android.sh   # 静态门
-node scripts/fetch-python-cli-source.mjs --python 3.14.0           # SCAFFOLD ⇒ 预期退出码 2
-bash scripts/build-python-cli-android.sh --python 3.14.0 --src x --ndk y --out z  # 同上
+node scripts/fetch-python-cli-source.mjs --python 3.14.10           # 五源钉选后 exit 0（sha256 未钉 ⇒ exit 1）
+bash scripts/build-python-cli-android.sh --python 3.14.10 --src x --ndk y --out z --dry-run  # 干跑打印全流程（真实编译 CI ⬜）
 gradle :python-cli:tasks --console=plain                           # 配置门（需 Gradle 9.4.1 + JDK 21）
 git status --porcelain                                             # 卫生门：jniLibs/assets 无条目
 ```
