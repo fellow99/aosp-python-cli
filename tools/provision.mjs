@@ -19,7 +19,12 @@
  *   node tools/provision.mjs --check
  *   node tools/provision.mjs --out python-cli/src/main/jniLibs --from <libpython_cli.so>
  *   node tools/provision.mjs --inspect <libpython_cli.so>
- *   node tools/provision.mjs --version 3.14.0 --abi arm64-v8a ...
+ *   node tools/provision.mjs --assets <stdlib-assets 目录>            # 投放 + 生成 manifest（FR-001-030/031）
+ *   node tools/provision.mjs --assets-mode verify                     # 只复验已投放树
+ *   node tools/provision.mjs --version 3.14.10 --abi arm64-v8a ...
+ *
+ * 扩展（001-building）：--assets 投放（静态性检查 + manifest 生成/复验）；jniLibs 白名单
+ * 放行 libpip.so/libpip3.so 壳脚本（内容须 #!/system/bin/sh 且含 "-m pip"，FR-001-033）。
  *
  * 退出码：0 全过 · 2 门禁不合格 · 1 用法/IO 错误
  */
@@ -36,11 +41,17 @@ const RES_PROPERTIES = 'python-cli.properties';
 const DEFAULT_BINARY = 'libpython_cli.so';
 // 绝不进入本 AAR 的文件（node-runtime 统一供给；同名库重复会造成包内冲突）。
 const BANNED_IN_AAR = ['libnode.so'];
+// jniLibs 壳脚本白名单（001-building FR-001-033，D6）：pip 命令入口。
+// 白名单只放行「内容为 sh 壳」的文件；真二进制伪装成这些名字仍被拒绝。
+const SHELL_SCRIPT_NAMES = ['libpip.so', 'libpip3.so'];
+const SHELL_SCRIPT_MARK = '-m pip';
 // ───────────────────────────────────────────────────────────────────────────
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_PATH = path.join(ROOT, LOCK_FILE);
 const MODULE_JNILIBS = path.join(MODULE_DIR, 'src', 'main', 'jniLibs');
+const MODULE_ASSETS = path.join(MODULE_DIR, 'src', 'main', 'assets', 'python-bridge-tools');
+const ASSETS_MANIFEST = 'manifest.json';
 
 const args = process.argv.slice(2);
 const has = (f) => args.includes(f);
@@ -51,6 +62,70 @@ function argOf(name, fallback = null) {
 
 function say(msg) {
   process.stdout.write(`[provision] ${msg}\n`);
+}
+
+// ── assets 树：清单与静态性检查（001-building FR-001-030…032）───────────────
+
+/** 递归收集目录内全部文件（相对路径，正斜杠）。 */
+function walkFiles(dir, base = dir) {
+  const out = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...walkFiles(p, base));
+    else if (ent.isFile()) out.push(path.relative(base, p).split(path.sep).join('/'));
+  }
+  return out.sort();
+}
+
+function sha256File(p) {
+  const h = crypto.createHash('sha256');
+  h.update(fs.readFileSync(p));
+  return h.digest('hex');
+}
+
+/** 静态性检查：数据树内不得出现原生件（防动态扩展漏网，规划 §6）。 */
+function assertNoNative(dir) {
+  const offenders = walkFiles(dir).filter((f) => f.endsWith('.so'));
+  if (offenders.length) {
+    say(`✘ 静态性检查：assets 树内发现 .so（动态扩展禁止随包）：${JSON.stringify(offenders)}`);
+    process.exit(2);
+  }
+  say('✔ 静态性检查：assets 树内无 .so');
+}
+
+/** 生成/校验 manifest：逐文件 sha256 + 总摘要（对 relpath+sha256 排序串取哈希）。 */
+function manifestFor(dir) {
+  const files = {};
+  for (const rel of walkFiles(dir)) {
+    if (rel === ASSETS_MANIFEST) continue; // manifest 不含自身
+    files[rel] = sha256File(path.join(dir, rel));
+  }
+  const names = Object.keys(files).sort();
+  const totalSha256 = crypto.createHash('sha256')
+    .update(names.map((n) => `${n}${files[n]}`).join('\n')).digest('hex');
+  return {
+    tool: 'provision.mjs',
+    version: null, // 调用方填
+    abi: null,
+    fileCount: names.length,
+    totalSha256,
+    generatedAt: new Date().toISOString(),
+    files,
+  };
+}
+
+function verifyAssets(targetDir, manifest) {
+  const problems = [];
+  const actual = manifestFor(targetDir).files;
+  const expect = manifest.files;
+  for (const f of Object.keys(expect)) {
+    if (!(f in actual)) problems.push(`缺文件：${f}`);
+    else if (actual[f] !== expect[f]) problems.push(`哈希漂移：${f}`);
+  }
+  for (const f of Object.keys(actual)) {
+    if (!(f in expect)) problems.push(`多文件：${f}`);
+  }
+  return problems;
 }
 
 // ── 极简 ELF64（小端）解析：只回答门禁需要的问题（与 pty 同款 + PT_INTERP 内容）──
@@ -172,6 +247,27 @@ function printGates(g) {
   for (const x of g.results) say(`${x.ok ? '✔' : '✘'} ${x.id} — ${x.detail}`);
 }
 
+/** jniLibs 兄弟 .so 白名单（FR-001-033）：主件 + libpip*.so 壳脚本（内容须为 sh 壳）。 */
+function isPipShell(dir, f) {
+  if (!SHELL_SCRIPT_NAMES.includes(f)) return false;
+  try {
+    const head = fs.readFileSync(path.join(dir, f), 'utf8');
+    return head.startsWith('#!/system/bin/sh') && head.includes(SHELL_SCRIPT_MARK);
+  } catch {
+    return false;
+  }
+}
+
+function illegalSiblings(dir, activeName) {
+  const siblings = fs.readdirSync(dir).filter((f) => f.endsWith('.so'));
+  return siblings.filter((f) => {
+    if (f === activeName) return false;
+    if (isPipShell(dir, f)) return false;
+    // 白名单名字但内容不是 sh 壳 ⇒ 伪装，拒绝。
+    return true;
+  });
+}
+
 // ── 主流程 ──────────────────────────────────────────────────────────────────
 
 function readLock() {
@@ -205,11 +301,56 @@ function main() {
     process.exit(g.ok ? 0 : 2);
   }
 
+  // ── --assets <dir>：随包数据投放 / 复验（001-building FR-001-030…032）────────
+  const assetsDir = argOf('--assets');
+  const assetsMode = argOf('--assets-mode') ?? 'stage';
+  if (assetsMode !== 'stage' && assetsMode !== 'verify') {
+    throw new Error('--assets-mode 仅 stage|verify');
+  }
+  if (assetsDir) {
+    if (assetsMode !== 'stage') throw new Error('--assets-mode verify 不接受 --assets <dir>（复验对象是已投放树）');
+    if (!fs.existsSync(assetsDir) || !fs.statSync(assetsDir).isDirectory()) {
+      throw new Error(`--assets 目录不存在：${assetsDir}`);
+    }
+    say(`assets 投放：${assetsDir} → ${MODULE_ASSETS}`);
+    assertNoNative(assetsDir);
+    fs.rmSync(path.join(ROOT, MODULE_ASSETS), { recursive: true, force: true });
+    fs.mkdirSync(path.join(ROOT, MODULE_ASSETS), { recursive: true });
+    fs.cpSync(assetsDir, path.join(ROOT, MODULE_ASSETS), { recursive: true });
+    const manifest = manifestFor(path.join(ROOT, MODULE_ASSETS));
+    manifest.version = rel.version;
+    manifest.abi = rel.abi;
+    fs.writeFileSync(
+      path.join(ROOT, MODULE_ASSETS, ASSETS_MANIFEST),
+      JSON.stringify(manifest, null, 2) + '\n',
+    );
+    say(`✔ manifest.json：${manifest.fileCount} 文件，totalSha256=${manifest.totalSha256.slice(0, 16)}…`);
+    say('assets 投放完成（幂等：先清空再投放）。');
+    process.exit(0);
+  }
+  if (assetsMode === 'verify') {
+    const target = path.join(ROOT, MODULE_ASSETS);
+    if (!fs.existsSync(target)) {
+      say(`assets 未投放：${target}（先跑 --assets <dir>）`);
+      process.exit(2);
+    }
+    const mPath = path.join(target, ASSETS_MANIFEST);
+    if (!fs.existsSync(mPath)) throw new Error(`缺 ${ASSETS_MANIFEST}（投放树不完整）`);
+    const problems = verifyAssets(target, JSON.parse(fs.readFileSync(mPath, 'utf8')));
+    for (const p of problems) say(`✘ ${p}`);
+    if (problems.length) {
+      say('assets 复验：不合格');
+      process.exit(2);
+    }
+    say('✔ assets 复验：与 manifest 一致');
+    process.exit(0);
+  }
+
   const outDir = argOf('--out');
   const from = argOf('--from');
 
   if (!outDir) {
-    // --check：校验已投放产物
+    // --check：校验已投放产物（jniLibs 门禁 + 兄弟白名单 + assets 复验）
     const target = path.join(ROOT, MODULE_JNILIBS, active.abi, active.name);
     if (!fs.existsSync(target)) {
       say(`未投放：${target}（先跑 --out …）`);
@@ -218,12 +359,27 @@ function main() {
     const buf = fs.readFileSync(target);
     const g = gates(buf, rel, allowedNeeded);
     printGates(g);
-    // 纪律：jniLibs 目录里只能有本工具二进制，绝不能混入引擎/C++ 运行时。
+    // 纪律：jniLibs 只允许 本工具二进制 + libpip*.so 壳脚本（FR-001-033），引擎/C++ 运行时绝不能混入。
     const dir = path.dirname(target);
-    const siblings = fs.readdirSync(dir).filter((f) => f.endsWith('.so'));
-    const illegal = siblings.filter((f) => f !== active.name);
-    say(`${illegal.length === 0 ? '✔' : '✘'} jniLibs 仅含 ${active.name}（其它 .so：${illegal.length ? JSON.stringify(illegal) : '无'}）`);
-    const ok = g.ok && illegal.length === 0;
+    const illegal = illegalSiblings(dir, active.name);
+    const shells = fs.readdirSync(dir).filter((f) => isPipShell(dir, f));
+    say(`${illegal.length === 0 ? '✔' : '✘'} jniLibs 白名单：主件 + 壳脚本${shells.length ? `（${shells.join(', ')}）` : '（无）'}；违规 .so：${illegal.length ? JSON.stringify(illegal) : '无'}`);
+    // assets 复验（规划 §5：随包数据必须带清单）
+    let assetsOk = true;
+    const assetsTarget = path.join(ROOT, MODULE_ASSETS);
+    if (!fs.existsSync(assetsTarget)) {
+      say('✘ assets 未投放（provision --assets <dir>）');
+      assetsOk = false;
+    } else if (!fs.existsSync(path.join(assetsTarget, ASSETS_MANIFEST))) {
+      say(`✘ assets 缺 ${ASSETS_MANIFEST}（投放树不完整）`);
+      assetsOk = false;
+    } else {
+      const problems = verifyAssets(assetsTarget, JSON.parse(fs.readFileSync(path.join(assetsTarget, ASSETS_MANIFEST), 'utf8')));
+      for (const p of problems) say(`✘ assets ${p}`);
+      say(problems.length === 0 ? `✔ assets 复验：与 manifest 一致` : `✘ assets 复验：${problems.length} 处不一致`);
+      assetsOk = problems.length === 0;
+    }
+    const ok = g.ok && illegal.length === 0 && assetsOk;
     say(ok ? '门禁：全过' : '门禁：不合格');
     process.exit(ok ? 0 : 2);
   }
@@ -237,12 +393,28 @@ function main() {
     process.exit(2);
   }
 
-  // 投放：只复制本工具二进制。
+  // 投放：主件 + 同目录存在的 libpip*.so 壳脚本（内容校验，D6 入口）。
   const destDir = path.resolve(ROOT, outDir, active.abi);
   fs.mkdirSync(destDir, { recursive: true });
   const dest = path.join(destDir, active.name);
   fs.copyFileSync(from, dest);
   say(`✔ 投放（唯一原生件）：${dest}`);
+  const srcDir = path.dirname(path.resolve(from));
+  for (const f of SHELL_SCRIPT_NAMES) {
+    const cand = path.join(srcDir, f);
+    if (!fs.existsSync(cand)) continue;
+    if (!isPipShell(srcDir, f)) {
+      say(`✘ ${f} 内容不是 sh 壳（须 #!/system/bin/sh + ${SHELL_SCRIPT_MARK}）⇒ 拒绝投放`);
+      process.exit(2);
+    }
+    fs.copyFileSync(cand, path.join(destDir, f));
+    say(`✔ 投放（pip 壳脚本，白名单）：${path.join(destDir, f)}`);
+  }
+  const illegal = illegalSiblings(destDir, active.name);
+  if (illegal.length) {
+    say(`✘ jniLibs 白名单违规：${JSON.stringify(illegal)}`);
+    process.exit(2);
+  }
   for (const banned of BANNED_IN_AAR) {
     if (fs.existsSync(path.join(destDir, banned))) {
       throw new Error(`${banned} 不得进入本 AAR（应由配对 runtime 供给，避免包内同名冲突）`);

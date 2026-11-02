@@ -22,6 +22,7 @@ google-services.json
 # 二进制/随包树不入库（由 CI 产出，tools/provision.mjs 投放）
 python-cli/src/main/jniLibs/**/*.so
 python-cli/src/main/assets/**
+python-cli/src/main/resources/META-INF/python-cli.properties
 
 # provision / fetch / build workspace
 .dist/
