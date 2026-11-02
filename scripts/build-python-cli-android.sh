@@ -259,11 +259,17 @@ if [[ "$COLLECT_ONLY" == 0 ]]; then
   # ── ④ make ────────────────────────────────────────────────────────────────
   log "④ make -j$JOBS（$HOST_BUILD_DIR）"
   if [[ "$CONFIGURE_MODE" == android ]]; then
+    # 不用 android.py make-host：其硬编码 make -j$(os.cpu_count()) 不可控；
+    # configure 已把 android-env（含 NDK 工具链）捕获进 Makefile，直跑 make 即可（CI 第五轮调整）。
     if [[ "$DRY_RUN" == 0 ]]; then
-      ( cd "$SRC" && ANDROID_HOME="$ANDROID_SDK" ANDROID_API_LEVEL="$API" \
-        python3 Android/android.py make-host "$HOST_TRIPLET" ) || err "make-host 失败" 2
+      df -h . | tail -1; free -m | head -2 || true
+      # 复刻 android.py make-host 的防污染清理：删 prefix 内已装 python（防被 PATH/pc 捡走）
+      rm -rf "$HOST_BUILD_DIR"/prefix/include/python* \
+             "$HOST_BUILD_DIR"/prefix/lib/libpython* \
+             "$HOST_BUILD_DIR"/prefix/lib/python* 2>/dev/null || true
+      run make -C "$HOST_BUILD_DIR" -j"$JOBS" || err "make-host 失败（上方 df/free 为资源诊断）" 2
     else
-      log "  (dry-run) cd $SRC && python3 Android/android.py make-host $HOST_TRIPLET"
+      log "  (dry-run) make -C $HOST_BUILD_DIR -j$JOBS"
     fi
   else
     run make -C "$HOST_BUILD_DIR" -j"$JOBS"

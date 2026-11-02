@@ -21,7 +21,7 @@
 | **打包形态** | `packaging.jniLibs.useLegacyPackaging = true`（extractNativeLibs=true） | ✅已实现 | 把 `.so` 物理落盘 `nativeLibraryDir` | 不落盘则 `execve` ENOENT（`build.gradle.kts` 注释明文）；与 node-pty 的 dlopen 库口径**相反** |
 | **目标引擎** | CPython **3.14.10**（draft 计划版本，以 CI 实际钉选为准） | ⬜规划（M1 构建；本体二进制不存在） | `libpython_cli.so` 本体 + `Lib/` stdlib | PEP 738（CPython 3.13+ 官方 Android 支持）；版本=制品版本、独立 semver |
 | **交叉编译路径** | PEP 738 官方路径：`configure --host=aarch64-linux-android` + `--with-build-python=<同版本 host python>` | ⬜规划（M1） | 官方支持的 Android 交叉编译 | 官方路径 ⇒ 不打源码补丁（fetch 不改源，C1）；源码树自带 Android 构建辅助优先包装（规划 §4.3） |
-| **NDK** | 与 aosp-node-runtime 对齐（r28c 或更高；PEP 738 要求 r26+）⬜ | ⬜规划（未钉版） | 交叉工具链 | lock `builtFrom.ndk` 现值 `"TBD (first CI build pins NDK line + version)"`——如实未钉 |
+| **NDK** | **27.3.13750724**（CPython 3.14.10 官方 android-env.sh 硬编码钉版） | ✅ 已钉（CI 首跑核对 2026-11-02） | 交叉工具链 | lock `builtFrom.ndk` 首产后由 writeback 回写实测值 |
 | **OpenSSL** | vendored 源码钉版 + `./Configure android-arm64 no-shared`，静态链入 `_ssl`/`_hashlib` | ⬜规划（M1-T4） | TLS（Android 无系统证书目录，CA bundle 随包） | 版本计划写入 lock `builtFrom.deps`（规划 §4.1）；首版若失败则 `_ssl` 不编并如实上报（规划 R2） |
 | **sqlite3** | 官方 amalgamation（sqlite3.c）vendored，静态链入 `_sqlite3` | ⬜规划（M1-T4） | sqlite3 标准库模块 | 同上；版本同入 lock |
 | **pip** | 官方 wheel（files.pythonhosted.org）钉版 + sha256，解包进 `Lib/site-packages/`；`libpip.so`/`libpip3.so` 壳脚本 → `libpython_cli.so -m pip` | ⬜规划（M1-T5，规划决策 D6） | 首启即有 `pip` 命令、离线可用 | pip 为纯 py 不需 exec 位；wheel 内 bin 脚本不使用 |
@@ -72,7 +72,7 @@
 | JDK 21 | Temurin | Gradle 构建 | 无 AAR | ✅ |
 | Gradle 9.4.1 | CI setup-gradle / 本地安装 | 构建 | 无 AAR | ✅（无 Wrapper ⚠️） |
 | AGP 9.2.1 + vanniktech 0.37.0 | google()/mavenCentral()/gradlePluginPortal | 构建/发布 | 解析失败 | ✅ |
-| Android SDK 36 / NDK（r28c+） | 本地 / CI 装机 | AGP 构建 / ⬜M1 交叉编译 | AAR 产出 / M1 阻塞 | NDK ⬜未钉 |
+| Android SDK 36 / NDK 27.3.13750724 | 本地 / CI 装机 | AGP 构建 / ⬜M1 交叉编译 | AAR 产出 / M1 阻塞 | NDK ✅已钉（官方 android-env） |
 | CPython 3.14.10 源码包 | python.org（sha256 校验） | ⬜M1 fetch | 无产物 | ⬜规划 |
 | OpenSSL / sqlite / pip wheel / cacert | 官方源（各带 sha256） | ⬜M1 | `_ssl`/`_sqlite3`/`pip` 缺 | ⬜规划 |
 | Central Portal Token / GPG | 用户级 gradle.properties | 仅真实发布 | 发布任务被禁用（默认态） | ✅卫生就绪 |

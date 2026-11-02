@@ -16,7 +16,7 @@
 
 | 项 | 取值 | 说明 |
 |---|---|---|
-| 工具链（CI） | NDK r28c（与 aosp-node-runtime 对齐线）+ clang（NDK 自带 LLVM） | PEP 738 要求 NDK r26+（规划 §4.1）⬜ 首产实测 |
+| 工具链（CI） | NDK **27.3.13750724**（CPython 3.14.10 官方 android-env.sh 钉版，CI 首跑核对）+ clang（NDK 自带 LLVM） | PEP 738 要求 r26+；原 r28c 设想作废（C1：不改上游） |
 | host build python | 官方 Linux 安装包/自建，**版本 = 目标 CPython 版本**（3.14.x） | FR-001-010 断言 |
 | 五源 | CPython `Python-<ver>.tgz` · OpenSSL `openssl-<ver>.tar.gz` · sqlite `sqlite-amalgamation-<ver>.zip` · pip `pip-<ver>-py3-none-any.whl` · curl `cacert.pem` | URL 模板与 sha256 见 §3.1 |
 | 运行时依赖 | `node:fs/path/crypto/url`（fetch 零第三方，NFR-2）+ bash + NDK 工具 | CI 另需 curl/file/tar/xz |

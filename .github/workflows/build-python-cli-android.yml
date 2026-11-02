@@ -27,7 +27,7 @@ env:
   GRADLE_VERSION: '9.4.1'
   NODE_VERSION: '20'
   JAVA_VERSION: '21'
-  NDK_VERSION: '28.2.13676358' # r28c 线 ⬜ 首跑核对
+  NDK_VERSION: '27.3.13750724' # CPython 3.14.10 官方 Android/android-env.sh 钉版（2026-11-02 CI 首跑核对：其硬编码 27.3，r28c 设想作废，C8 回写）
 
 jobs:
   gate:
@@ -167,13 +167,15 @@ jobs:
 
       - name: 交叉编译（001 八步：vendored OpenSSL/Setup.local/configure/make/strip/归集/元数据）
         run: |
+          df -h . | tail -1
           bash scripts/build-python-cli-android.sh \
-            --python "$PYVER" --api "$ANDROID_API" \
+            --python "$PYVER" --api "$ANDROID_API" --jobs 3 \
             --src .dist/src/cpython --deps .dist/src \
             --ndk "$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}" \
             --android-sdk "$ANDROID_HOME" \
             --host-python "$(command -v python)" \
             --out .dist/out
+          df -h . | tail -1
 
       - name: 门禁 + 投放（jniLibs 含壳脚本；assets 含 manifest）
         run: |

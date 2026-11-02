@@ -15,7 +15,7 @@
 | runner | `ubuntu-24.04` | 规划 §9 |
 | JDK | Temurin 21（`actions/setup-java`） | Gradle 配置门沿用 |
 | Node | 20（`actions/setup-node`，修复 000 登记的「CI 未显式 setup-node」建议项） | provision/fetch 运行时 |
-| NDK | r28c（`android-actions/setup-android` + sdkmanager 或直接解包钉 sha256）⬜ 首跑核对 | 规划 §4.1 |
+| NDK | **27.3.13750724**（runner 预装 SDK 直装 sdkmanager；setup-android action 因 tools 包下架不可用——CI 首跑实证） | 规划 §4.1；2026-11-02 首跑核对 |
 | host build python | `deadsnakes`/官方 tarball 自建，版本 = 目标版本（3.14.x）⬜ | FR-001-010 前置 |
 | 工具 | curl/file/tar/xz/unzip（runner 预装）+ ccache（`apt`/`actions/cache`） | 规划 §9 缓存 |
 

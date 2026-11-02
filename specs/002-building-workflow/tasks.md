@@ -9,7 +9,7 @@
 - [x] T1.4 release Job 触发隔离（tag v* / dispatch）+ `permissions` 收敛 — FR-002-006
 
 ## T2 release Job 流水线
-- [x] T2.1 装机矩阵（JDK21/Node20/NDK r28c/host python，版本集中 env 钉选）— FR-002-002
+- [x] T2.1 装机矩阵（JDK21/Node20/NDK 27.3.13750724 官方钉版/host python，版本集中 env 钉选）— FR-002-002
 - [x] T2.2 resolve 版本（tag→版本，与 lock active 一致性断言）
 - [x] T2.3 fetch → build → provision（jniLibs + assets + --check 全门禁）— FR-002-001
 - [x] T2.4 `gradle :python-cli:assembleRelease`（AAR 归档验证）
