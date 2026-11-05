@@ -80,6 +80,26 @@ Exit codes: `0` pass · `2` gate failure / not provisioned · `1` usage/IO error
 ET_DYN (PIE), PT_INTERP=system linker64, AArch64, DT_NEEDED whitelist, 16KB alignment,
 sha/size.
 
+## Capability boundaries / known limitations
+
+The following are **verified facts** (source:
+[`docs/20261105-cli-实测问题-修复设计.md`](docs/20261105-cli-实测问题-修复设计.md) §4.3 disclosure
+scope, stacked on top of plan §7 known limitations). Consumers must know them before integrating:
+
+- **sdist cannot be compiled on device**: no compiler on device, and the statically-linked
+  interpreter cannot load new `.so` files — neither pip nor uv can build source distributions
+  on-device; whether a C/Rust-extension package is installable depends on whether an android
+  arm64 wheel happens to exist (currently ≈ not installable).
+- **`python -m venv` / `uv` depend on the environment bootstrap layer**: CPython's venv writes
+  `pyvenv.cfg home` as the **symlink directory of the interpreter** (no stdlib there) → the venv
+  interpreter cannot find stdlib; `uv` also writes the **resolved realpath** home (a uv defect).
+  **Bare execution is not guaranteed**; the bootstrap layer (dsh-desktop-android) must construct a
+  self-consistent prefix and override `home` to self-heal (repair design §4.2 C1).
+- **venv self-heal**: after overriding `home` to a **stdlib-containing prefix**, running
+  `.venv/bin/python -m ensurepip` succeeds in installing pip (repair design §2.2 evidence).
+- **pip-installed CLI scripts under filesDir are not directly executable** (SELinux, plan §7 known
+  limitation) — call via `python -m <mod>` or pip-internal mechanisms.
+
 ## License
 
 [MIT](LICENSE). CPython is PSF-2.0 — see

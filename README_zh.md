@@ -70,6 +70,22 @@ node tools/provision.mjs --check
 [`python-cli.lock.json`](python-cli.lock.json)（唯一事实源，当前 draft）。退出码：`0` 全过 ·
 `2` 门禁不合格/未投放 · `1` 用法/IO 错误。门禁：ET_DYN（PIE）、PT_INTERP=系统 linker64、
 AArch64、DT_NEEDED 白名单、16KB 对齐、sha/size。
+## 能力边界 / 已知限制
+
+以下均为**实测事实**（来源：[`docs/20261105-cli-实测问题-修复设计.md`](docs/20261105-cli-实测问题-修复设计.md)
+§4.3 能力边界披露口径；叠加规划 §7 已知限制），消费方集成前必须知悉：
+
+- **sdist 不可设备编译**：设备无编译器，且静态解释器不能加载新 `.so`——pip/uv 均无法在设备
+  上编译源码分发版；含 C/Rust 扩展的包是否可装取决于是否恰好有现成的 android arm64 wheel，
+  现状≈不可装。
+- **`python -m venv` / `uv` 依赖环境引导层**：CPython venv 把 `pyvenv.cfg home` 写成**解释器
+  软链所在目录**（无 stdlib）→ venv 解释器找不到 stdlib；`uv` 建环境还写死**符号解析后**的
+  realpath home（uv 自身缺陷）。**当前裸执行不保证**，须由环境引导层（dsh-desktop-android）
+  构造自洽 prefix 并覆写 `home` 自愈（修复设计 §4.2 C1）。
+- **venv 自愈**：覆写 `home` 指向**含 stdlib 的 prefix** 后，`.venv/bin/python -m ensurepip`
+  可成功安装 pip（修复设计 §2.2 实证）。
+- **pip 安装的 CLI 脚本落 filesDir 不可直接 exec**（SELinux，规划 §7 已知限制）——须以
+  `python -m <mod>` 或 pip 内部机制调用。
 
 ## 许可
 

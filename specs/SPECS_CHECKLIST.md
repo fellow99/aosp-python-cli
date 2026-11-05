@@ -35,6 +35,7 @@
 | M-03 | 002-building-workflow 构建流水线 | [`002-building-workflow/spec.md`](./002-building-workflow/spec.md) | ✅（2026-11-02） | ✅ | ✅ | —（同上） | ⬜ 已立项 | FR-002-001…009；workflow 本批实现（含 000 缺陷 #1 修复），真实跑批 ⬜ |
 | M-04 | 003-cli python 命令行 | [`003-cli/spec.md`](./003-cli/spec.md) | ✅（2026-11-02） | ✅ | ✅ | ✅（TC-003-01…17） | ⬜ 已立项 | FR-003-001…014；host 子集本批执行，设备侧 ⬜ 待 CI 首产 + M2-T2 |
 | M-05 | 101-pip-integration pip 集成 | [`101-pip-integration/spec.md`](./101-pip-integration/spec.md) | ✅（2026-11-02） | ✅ | ✅ | ✅（TC-101-01…18） | ⬜ 已立项 | FR-101-001…012；host 子集本批执行，设备侧 ⬜（uv 组合 BLOCKED 机制） |
+ | M-06 | 101-probe-app 设备侧回程探针载体 | [`101-probe-app/spec.md`](./101-probe-app/spec.md) | ✅（2026-11-05 as-built） | ✅ | ✅ | ✅（TC-003/TC-101 载体链 + TC-VENV-01…03） | ✅ 已实现 | FR-101-probe-001…009；specs-as-built 逆向 probe-app；TC-VENV 设备侧 ⬜ 待 CI 首产；能力边界披露引修复设计 §4.3 |
 
 **每模块 spec.md（WHAT/WHY）与 plan.md（HOW）成对提供**；000-scaffold 另有 tasks.md 与 test-cases.md（M0 为单模块工程，两者保留在模块目录内）。
 
@@ -58,9 +59,9 @@
 | `spec.md` / `overall-spec.md` 不含实现细节（框架名、文件路径） | ✅（技术无关词面已复核） |
 | `plan.md` 引用真实文件路径与真实行数 | ✅（`000-scaffold/plan.md` §8 文件清单行数实测） |
 | `plan.md` 交叉引用本模块 `spec.md` 的 `FR-000-*` | ✅（§4/§5/§8 逐条；未新造 FR 编号） |
-| 模块同时有 `spec.md` 与 `plan.md` | ✅（1/1） |
+| 模块同时有 `spec.md` 与 `plan.md` | ✅（6 个模块均成对；101-probe-app 另有 tasks/test-cases 共 4 件） |
 | `README.md` 链接全部指向存在的文件 | ✅（生成后逐一 `test -f` 校验） |
-| 模块目录数与登记一致 | ✅（specs/ 仅 `000-scaffold/` 一个模块目录） |
+| 模块目录数与登记一致 | ✅（specs/ 共 6 个模块目录：000-scaffold / 001-building / 002-building-workflow / 003-cli / 101-pip-integration / 101-probe-app） |
 | as-built 与 planned 逐条区分（⬜ 标记） | ✅（M1+ 全部 ⬜规划；AAR 实测内容、退出码、行数均 ✅） |
 | 未伪造任何哈希/体积/版本事实 | ✅（draft 空值照录；AAR 内容为解包实测） |
 
@@ -74,6 +75,7 @@
 | fetch/build 脚本真实逻辑替换（现 exit 2 骨架） | ⬜M1-T1/T3 → [001-building](./001-building/tasks.md) T2/T3 | 规划 §4.1/§4.2 |
 | provision 扩展（`--assets`/manifest/静态性检查/壳脚本白名单） | ⬜M1-T6 → [001-building](./001-building/tasks.md) T4 | 规划 §6 |
 | CI 真实流水线 + GitHub Release + lock 回写（**含修复退出码断言缺陷**） | ⬜M1-T7 → [002-building-workflow](./002-building-workflow/tasks.md) | 规划 §9/§10.1；`000-scaffold/plan.md` §9 #1 |
-| 真机回程探针 P1–P6 | ⬜M2；用例正典已冻结于 [003-cli](./003-cli/test-cases.md) 与 [101-pip-integration](./101-pip-integration/test-cases.md) | 规划 §7.1 |
+| 真机回程探针 P1–P6（TC-003/TC-101 设备侧） | ⬜M2 残余：载体 [101-probe-app](./101-probe-app/test-cases.md) 已实现且 2026-11-02 实测 32 PASS/2 BLOCKED；真实 payload 首产后的复核/回归 ⬜ | 规划 §7.1；`logs/20261102-1/probe-report-device.json` |
 | Maven Central 首发 + lock `published=true` | ⬜M3 | 规划 §10.1 |
 | Gradle Wrapper 引入 / `VERSION_NAME` 取舍 | ⬜建议项（CI setup-node 已由 002 T1.2 接办） | `overall-plan.md` §6 #2/#3/#4 |
+| TC-VENV-01…03 设备侧执行 + 事实回填 | ⬜（101-probe-app tasks T6）待真实 `python-cli-release.aar` CI 首产后执行 | [101-probe-app/test-cases.md](./101-probe-app/test-cases.md) §二/§三 |
