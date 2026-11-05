@@ -2,9 +2,11 @@ package org.fellow99.pythonprobe;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -12,6 +14,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +31,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * python-cli 探针载体（M2-T1 / specs 003-cli + 101-pip-integration tasks T4.1）。
+ * python-cli 探针载体（M2-T1 / specs 003-cli + 101-pip-integration tasks T4.1 +
+ * specs/101-probe-app（as-built））。
  *
  * 职责（镜像 docs/000-工程规划.md §3 消费方环境引导层 + §7 环境变量契约）：
  *  1) 物化：assets/python-bridge-tools/** → filesDir/python-bridge-tools（marker 幂等）；
@@ -36,6 +40,10 @@ import org.json.JSONObject;
  *  3) 执行：ProcessBuilder exec nativeLibraryDir/libpython_cli.so 与 libpip.so（非 PTY 子集；
  *     REPL/PTY 语义归终端 App，TC-003-13 按 BLOCKED 登记）；
  *  4) 判据：TC-003-01…15 与 TC-101-01…14 的可执行子集，逐条 PASS/FAIL/BLOCKED + JSON 报告。
+ *  5) TC-VENV-01…03：venv 能力边界事实探针（迁移自修复设计
+ *     docs/20261105-cli-实测问题-修复设计.md §2.2/§4.2/§4.3）——python -m venv 行为与
+ *     pyvenv.cfg home 事实、home 覆写后 ensurepip 自愈路径验证。
+ *  6) 无头触发：launcher intent --ez autorun true 直接 runAll（参照 git-cli probe）。
  */
 public class MainActivity extends Activity {
 
@@ -75,6 +83,9 @@ public class MainActivity extends Activity {
         setContentView(root);
         log("probe-app ready\nnativeDir=" + nativeDir + "\ntoolsDir=" + toolsDir
                 + "\n点击 RUN ALL PROBES 执行（首次会物化 assets，约 1-2 分钟）");
+        // 无头触发（参照 git-cli probe）：adb shell am start -n org.fellow99.pythonprobe/.MainActivity --ez autorun true
+        Intent in = getIntent();
+        if (in != null && in.getBooleanExtra("autorun", false)) runAll();
     }
 
     private void log(String s) {
@@ -251,6 +262,23 @@ public class MainActivity extends Activity {
         for (String s : args) a.add(s);
         return a;
     }
+    private static String readPyvenvHome(File cfg) {
+        if (!cfg.isFile()) return "";
+        try (BufferedReader r = new BufferedReader(
+                new InputStreamReader(new FileInputStream(cfg), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                String t = line.trim();
+                if (t.startsWith("home")) {
+                    int i = t.indexOf('=');
+                    if (i >= 0) return t.substring(i + 1).trim();
+                }
+            }
+        } catch (IOException ignored) {
+        }
+        return "";
+    }
+
 
     private List<Probe> probes() {
         List<Probe> l = new ArrayList<>();
@@ -384,6 +412,51 @@ public class MainActivity extends Activity {
         l.add(new Probe("TC-101-10", "uv pip 组合", arr(nativeDir + "/libuv.so", "--version"),
                 null, null, 15_000,
                 o -> "BLOCKED:aosp-uv-cli 未就绪（P5 外部依赖）"));
+        // ── 101-probe-app：TC-VENV（venv/uv 能力边界事实探针；引用文档
+        //    docs/20261105-cli-实测问题-修复设计.md §2.2/§4.2/§4.3）──
+        l.add(new Probe("TC-VENV-01", "python -m venv .v 行为事实（含 pyvenv.cfg home）",
+                py("-m", "venv", ".v"), null, null, 180_000,
+                o -> {
+                    File cfg = new File(getFilesDir(), ".v/pyvenv.cfg");
+                    String home = readPyvenvHome(cfg);
+                    if (cfg.isFile()) {
+                        return "PASS-FACT:exit=" + o.exit + " pyvenv.cfg=EXISTS home='" + home + "'"
+                                + " homeHasStdlib=" + new File(home, "lib/python3.14").isDirectory()
+                                + " venvPython=" + new File(getFilesDir(), ".v/bin/python").exists()
+                                + " err" + (o.stderr == null || o.stderr.isEmpty() ? "=EMPTY" : "=" + head(o.stderr));
+                    }
+                    return "PASS-FACT:exit=" + o.exit + " pyvenv.cfg=MISSING"
+                            + " out=" + head(o.stdout) + " err=" + head(o.stderr);
+                }));
+        l.add(new Probe("TC-VENV-02", "读取 .v/pyvenv.cfg 并打印（fact 探针）",
+                py("-c",
+                        "import os\np='.v/pyvenv.cfg'\nprint('CFG_EXISTS', os.path.exists(p))\n"
+                                + "if os.path.exists(p):\n"
+                                + " print('---- pyvenv.cfg begin ----')\n"
+                                + " print(open(p).read())\n"
+                                + " print('---- pyvenv.cfg end ----')\n"),
+                null, null, 30_000,
+                o -> o.exit == 0 && o.stdout.contains("CFG_EXISTS True")
+                        ? "PASS-FACT:[" + head(o.stdout.replace("\n", "|"), 1200) + "]"
+                        : "PASS-FACT:exit=" + o.exit + " out=" + head(o.stdout) + " err=" + head(o.stderr)));
+        l.add(new Probe("TC-VENV-03", "覆写 home 指向含 stdlib 的 prefix 后 .v/bin/python -m ensurepip（自愈路径验证）",
+                py("venv-prep-ensurepip.py"),
+                envKv("VENV_PREFIX", new File(getFilesDir(), "python-bridge-tools").getAbsolutePath()),
+                null, 180_000,
+                o -> {
+                    String out = o.stdout == null ? "" : o.stdout;
+                    String both = out + (o.stderr == null ? "" : o.stderr);
+                    String low = both.toLowerCase(java.util.Locale.ROOT);
+                    if (o.exit == 0
+                            && (out.contains("Successfully installed") || new File(getFilesDir(), ".v/bin/pip").exists())) {
+                        return "PASS:自愈路径生效——home 覆写后 stdlib 可寻、ensurepip 成功（修复设计 §2.2/§4.2）";
+                    }
+                    return low.contains("platform independent") || low.contains("init_fs_encoding")
+                            || low.contains("could not find") || low.contains("no module named")
+                            ? "PASS-BOUNDARY:home 覆写后仍无法定位 stdlib（预 harness 自愈边界事实）exit=" + o.exit + " " + head(both, 300)
+                            : "FAIL:exit=" + o.exit + " out=" + head(both, 300);
+                }));
+
         return l;
     }
 
@@ -447,6 +520,28 @@ public class MainActivity extends Activity {
                 try (OutputStream os = new FileOutputStream(fake)) {
                     os.write("#!/system/bin/sh\necho should-not-run\n".getBytes(StandardCharsets.UTF_8));
                 }
+                // TC-VENV 前置：.v 工作目录 + ensurepip 自愈验证脚本（脚本负责覆写 pyvenv.cfg home，
+                // VENV_PREFIX 由 envOverride 注入；自愈判据见 TC-VENV-03 探针）
+                new File(getFilesDir(), ".v").mkdirs();
+                File venvPrep = new File(getFilesDir(), "venv-prep-ensurepip.py");
+                try (OutputStream os = new FileOutputStream(venvPrep)) {
+                    os.write(("import os, sys, subprocess\n"
+                            + "cfg = '.v/pyvenv.cfg'\n"
+                            + "prefix = os.environ.get('VENV_PREFIX', '')\n"
+                            + "if os.path.exists(cfg):\n"
+                            + "    with open(cfg) as f:\n"
+                            + "        lines = f.read().splitlines(True)\n"
+                            + "    with open(cfg, 'w') as f:\n"
+                            + "        for ln in lines:\n"
+                            + "            f.write('home = ' + prefix + '\n' if ln.startswith('home') else ln)\n"
+                            + "env = {k: v for k, v in os.environ.items() if k != 'PYTHONHOME'}\n"
+                            + "r = subprocess.run(['.v/bin/python', '-m', 'ensurepip'],\n"
+                            + "                   capture_output=True, text=True, env=env)\n"
+                            + "print(r.stdout, end='')\n"
+                            + "print(r.stderr, file=sys.stderr, end='')\n"
+                            + "sys.exit(r.returncode)\n").getBytes(StandardCharsets.UTF_8));
+                }
+
 
                 int pass = 0, fail = 0, blocked = 0;
                 for (Probe p : probes()) {
