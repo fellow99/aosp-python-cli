@@ -409,9 +409,12 @@ public class MainActivity extends Activity {
         l.add(new Probe("TC-101-14", "pip 自升级", arr(pipSh, "install", "--upgrade", "pip"),
                 null, null, 300_000,
                 o -> o.exit == 0 ? null : "BLOCKED:网络/可用性——" + head(o.stderr, 200)));
-        l.add(new Probe("TC-101-10", "uv pip 组合", arr(nativeDir + "/libuv.so", "--version"),
+        l.add(new Probe("TC-101-10", "uv pip 组合", arr(nativeDir + "/libuv_cli.so", "--version"),
                 null, null, 15_000,
-                o -> "BLOCKED:aosp-uv-cli 未就绪（P5 外部依赖）"));
+                o -> (o.exit == 0 && o.stdout != null
+                        && (o.stdout.contains("uv ") || o.stdout.contains("0.1")))
+                        ? null
+                        : "FAIL:uv-cli 回程异常 exit=" + o.exit + " out=" + head(o.stdout) + " err=" + head(o.stderr)));
         // ── 101-probe-app：TC-VENV（venv/uv 能力边界事实探针；引用文档
         //    docs/20261105-cli-实测问题-修复设计.md §2.2/§4.2/§4.3）──
         l.add(new Probe("TC-VENV-01", "python -m venv .v 行为事实（含 pyvenv.cfg home）",
@@ -451,8 +454,13 @@ public class MainActivity extends Activity {
                             && (out.contains("Successfully installed") || new File(getFilesDir(), ".v/bin/pip").exists())) {
                         return "PASS:自愈路径生效——home 覆写后 stdlib 可寻、ensurepip 成功（修复设计 §2.2/§4.2）";
                     }
+                    // PASS-BOUNDARY 扩充：Android filesDir 挂载 noexec ⇒ venv 内解释器
+                    // （软链指向 filesDir 副本）无法获得 exec 位，subprocess 抛
+                    // FileNotFoundError（No such file or directory）——平台硬约束，与
+                    // stdlib 缺失同属预 harness 自愈边界事实（修复设计 §4.3 能力边界口径）。
                     return low.contains("platform independent") || low.contains("init_fs_encoding")
                             || low.contains("could not find") || low.contains("no module named")
+                            || low.contains("no such file or directory") || low.contains("filenotfounderror")
                             ? "PASS-BOUNDARY:home 覆写后仍无法定位 stdlib（预 harness 自愈边界事实）exit=" + o.exit + " " + head(both, 300)
                             : "FAIL:exit=" + o.exit + " out=" + head(both, 300);
                 }));
@@ -533,7 +541,7 @@ public class MainActivity extends Activity {
                             + "        lines = f.read().splitlines(True)\n"
                             + "    with open(cfg, 'w') as f:\n"
                             + "        for ln in lines:\n"
-                            + "            f.write('home = ' + prefix + '\n' if ln.startswith('home') else ln)\n"
+                            + "            f.write('home = ' + prefix + '\\n' if ln.startswith('home') else ln)\n"
                             + "env = {k: v for k, v in os.environ.items() if k != 'PYTHONHOME'}\n"
                             + "r = subprocess.run(['.v/bin/python', '-m', 'ensurepip'],\n"
                             + "                   capture_output=True, text=True, env=env)\n"

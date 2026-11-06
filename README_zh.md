@@ -72,7 +72,7 @@ node tools/provision.mjs --check
 AArch64、DT_NEEDED 白名单、16KB 对齐、sha/size。
 ## 能力边界 / 已知限制
 
-以下均为**实测事实**（来源：[`docs/20261105-cli-实测问题-修复设计.md`](docs/20261105-cli-实测问题-修复设计.md)
+以下均为**实测事实**（来源：[`docs/20261105-cli-实测问题-修复设计.md`](https://github.com/fellow99/node-bridge-workspace/blob/main/docs/20261105-cli-实测问题-修复设计.md)（父仓 workspace docs/，本子仓 docs/ 无此文）
 §4.3 能力边界披露口径；叠加规划 §7 已知限制），消费方集成前必须知悉：
 
 - **sdist 不可设备编译**：设备无编译器，且静态解释器不能加载新 `.so`——pip/uv 均无法在设备

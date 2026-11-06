@@ -3,7 +3,7 @@
 > 模块：101-probe-app · 状态：✅ 已实现（specs-as-built：逆向 probe-app 现有代码，非新立需求）
 > 所属工程：aosp-python-cli · 规划基线：[`docs/000-工程规划.md`](../../docs/000-工程规划.md)
 > §3（消费方环境引导层）/§5（AAR 形态）/§6（exec 门禁）/§7（运行期契约）/§7.1（回程探针 P1–P6）
-> 能力边界口径：[`docs/20261105-cli-实测问题-修复设计.md`](../../docs/20261105-cli-实测问题-修复设计.md)
+> 能力边界口径：[`docs/20261105-cli-实测问题-修复设计.md`](https://github.com/fellow99/node-bridge-workspace/blob/main/docs/20261105-cli-实测问题-修复设计.md)（父仓 workspace docs/，本子仓 docs/ 无此文）
 > §2.2/§4.2/§4.3（venv/uv 边界与自愈；本模块复用「101」编号段，与 101-pip-integration 不同名，见 specs/README.md 编号说明）
 > 上游：`003-cli`（P1–P3/P6 探针）与 `101-pip-integration`（P4/P5 探针）共用的设备侧执行载体（003 tasks T4.1 / 101 tasks T4.1）
 

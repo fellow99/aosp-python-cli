@@ -83,7 +83,7 @@ sha/size.
 ## Capability boundaries / known limitations
 
 The following are **verified facts** (source:
-[`docs/20261105-cli-实测问题-修复设计.md`](docs/20261105-cli-实测问题-修复设计.md) §4.3 disclosure
+[`docs/20261105-cli-实测问题-修复设计.md`](https://github.com/fellow99/node-bridge-workspace/blob/main/docs/20261105-cli-实测问题-修复设计.md)（父仓 workspace docs/，本子仓 docs/ 无此文）§4.3 disclosure
 scope, stacked on top of plan §7 known limitations). Consumers must know them before integrating:
 
 - **sdist cannot be compiled on device**: no compiler on device, and the statically-linked

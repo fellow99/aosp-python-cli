@@ -5,7 +5,7 @@
 > **成对文档**：功能规格见 [spec.md](./spec.md)（`FR-101-probe-001…009` 唯一权威定义处）；用例正典见
 > [test-cases.md](./test-cases.md)（TC-003 / TC-101 既有 + TC-VENV-01…03）。
 > **状态**：✅ 已实现（本批 DEV_CHECKLIST：`logs/20261105-1/DEV_CHECKLIST.md`）。
-> **能力边界口径**：`docs/20261105-cli-实测问题-修复设计.md` §2.2/§4.2/§4.3。
+> **能力边界口径**：[`docs/20261105-cli-实测问题-修复设计.md`](https://github.com/fellow99/node-bridge-workspace/blob/main/docs/20261105-cli-实测问题-修复设计.md)（父仓 workspace docs/，本子仓 docs/ 无此文）§2.2/§4.2/§4.3。
 
 ---
 
